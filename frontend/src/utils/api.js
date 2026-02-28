@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// Dùng VITE_API_URL khi deploy (Vercel env var), fallback về /api cho dev (Vite proxy)
+// Dev: VITE_API_URL không set → dùng Vite proxy '/api'
+// Prod: VITE_API_URL = https://xxx.up.railway.app → tự ghép thành .../api
+const baseURL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL,
   timeout: 15000,
 });
 
