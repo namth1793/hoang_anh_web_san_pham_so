@@ -1,94 +1,15 @@
 import { Link } from 'react-router-dom';
+import bannerImg from '../asset/banner.jpg';
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 function HeroSection() {
   return (
-    <section className="hero">
-      <div className="hero__bg-orb hero__bg-orb--1"/>
-      <div className="hero__bg-orb hero__bg-orb--2"/>
-      <div className="hero__bg-orb hero__bg-orb--3"/>
+    <section className="hero-banner">
       <div className="container">
-        <div className="hero__grid">
-          <div className="hero__text">
-            <div className="hero__badge">
-              <span className="hero__badge-dot"/>
-              Kho sản phẩm số hàng đầu Việt Nam
-            </div>
-            <h1 className="hero__heading">
-              Tải ngay <span className="gradient-text">sản phẩm số</span> chất lượng cao – giao hàng tức thì
-            </h1>
-            <p className="hero__desc">
-              Khóa học, template, ebook, phần mềm, đồ họa và hàng trăm sản phẩm số khác.
-              Mua một lần – dùng mãi mãi. Tải về ngay sau khi thanh toán.
-            </p>
-            <div className="hero__actions">
-              <Link to="/lien-he"    className="btn btn--primary btn--lg">
-                💬 Liên hệ tư vấn ngay
-              </Link>
-              <Link to="/gioi-thieu" className="btn btn--outline-white btn--lg">Tìm hiểu thêm</Link>
-            </div>
-            <div className="hero__stats">
-              {[
-                { num:'500+',    label:'Sản phẩm số' },
-                { num:'10.000+', label:'Khách hàng' },
-                { num:'100%',    label:'Tải ngay lập tức' },
-              ].map(s => (
-                <div key={s.label} className="hero__stat">
-                  <div className="hero__stat-num">{s.num}</div>
-                  <div className="hero__stat-label">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="hero__mockup">
-            <div className="hero__float-card hero__float-card--1">
-              <div className="float-icon float-icon--green">⚡</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:'0.8rem'}}>Giao hàng tức thì</div>
-                <div style={{fontSize:'0.7rem',color:'rgba(255,255,255,0.5)'}}>Tải về ngay sau thanh toán</div>
-              </div>
-            </div>
-            <div className="mockup-window">
-              <div className="mockup-titlebar">
-                <span className="mockup-dot mockup-dot--red"/>
-                <span className="mockup-dot mockup-dot--yellow"/>
-                <span className="mockup-dot mockup-dot--green"/>
-                <span className="mockup-url">sanphamso.vn/store</span>
-              </div>
-              <div className="mockup-body">
-                <div className="mockup-app-header">
-                  <span className="mockup-app-title">🛒 Sản phẩm số Store</span>
-                  <span style={{fontSize:'0.7rem',color:'#6ee7b7',background:'rgba(16,185,129,0.12)',padding:'3px 8px',borderRadius:'20px'}}>500+ SP</span>
-                </div>
-                <div className="mockup-stats-row">
-                  <div className="mockup-stat-card"><div className="mockup-stat-num">🎓</div><div className="mockup-stat-lbl">Khóa học</div></div>
-                  <div className="mockup-stat-card mockup-stat-card--cyan"><div className="mockup-stat-num">🎨</div><div className="mockup-stat-lbl">Template</div></div>
-                  <div className="mockup-stat-card mockup-stat-card--purple"><div className="mockup-stat-num">📚</div><div className="mockup-stat-lbl">Ebook</div></div>
-                </div>
-                <div className="mockup-table-header"><span>Sản phẩm</span><span>Giá</span><span>Loại</span></div>
-                {[
-                  { n:'Khóa học Canva A-Z', p:'199K', t:'Video' },
-                  { n:'100 Template PPT',   p:'149K', t:'PPTX'  },
-                  { n:'Ebook KD Online',    p:'99K',  t:'PDF'   },
-                  { n:'Excel Kho hàng',     p:'129K', t:'XLSX'  },
-                ].map(r => (
-                  <div key={r.n} className="mockup-row">
-                    <span>{r.n}</span>
-                    <span style={{color:'#a5b4fc',fontWeight:600}}>{r.p}</span>
-                    <span><span className="mockup-badge">{r.t}</span></span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="hero__float-card hero__float-card--2">
-              <div className="float-icon float-icon--yellow">✅</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:'0.8rem'}}>Vừa mua thành công</div>
-                <div style={{fontSize:'0.7rem',color:'rgba(255,255,255,0.5)'}}>Khóa học Canva – 2 phút trước</div>
-              </div>
-            </div>
-          </div>
+        <img src={bannerImg} alt="MANAGE WORK – Manage Tasks, Boost Productivity" className="hero-banner__img" />
+        <div className="hero-banner__actions">
+          <Link to="/lien-he"    className="btn btn--primary btn--lg">💬 Liên hệ tư vấn ngay</Link>
+          <Link to="/gioi-thieu" className="btn btn--outline btn--lg">Tìm hiểu thêm</Link>
         </div>
       </div>
     </section>
@@ -197,7 +118,7 @@ function TestimonialsSection() {
           <span className="section__label">Phản hồi khách hàng</span>
           <h2 className="section__title">Khách hàng nói gì về chúng tôi</h2>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
+        <div className="testimonials-grid">
           {reviews.map((r) => (
             <div key={r.name} style={{ background:'white', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:'28px' }}>
               <div style={{ color:'#f59e0b', fontSize:'1.1rem', marginBottom:14 }}>★★★★★</div>
@@ -243,7 +164,7 @@ function CtaSection() {
 /* ── Export ───────────────────────────────────────────────────── */
 export default function LandingPage() {
   return (
-    <div style={{ marginTop: '-76px' }}>
+    <div>
       <HeroSection/>
       <WhyUsSection/>
       <HowToBuySection/>

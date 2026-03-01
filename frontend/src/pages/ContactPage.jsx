@@ -102,7 +102,7 @@ export default function ContactPage() {
                   {errors.name && <span className="form-error">{errors.name}</span>}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="contact-form-row">
                   <div className="form-group">
                     <label className="form-label">Số điện thoại</label>
                     <input className={`form-input${errors.phone ? ' form-input--error' : ''}`} type="tel" placeholder="0909 xxx xxx" value={form.phone} onChange={set('phone')} />

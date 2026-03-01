@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import logoImg from '../asset/logo.jpg';
 
 export default function Navbar() {
   const [scrolled, setScrolled]   = useState(false);
@@ -24,14 +25,7 @@ export default function Navbar() {
       <div className="container navbar__inner">
         {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <div className="navbar__logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          Sản phẩm số
+          <img src={logoImg} alt="MANAGE WORK" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Desktop + Mobile nav links */}
@@ -61,19 +55,20 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Right actions */}
+        {/* Right actions — desktop only */}
         <div className="navbar__actions">
-          {/* Cart icon */}
-          <button className="navbar__cart-btn" onClick={openCart} aria-label="Giỏ hàng">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-            </svg>
-            {totalItems > 0 && <span className="navbar__cart-badge">{totalItems}</span>}
-          </button>
           <Link to="/admin/login" className="btn btn--outline-white btn--sm">Đăng nhập admin</Link>
-          <Link to="/lien-he"   className="btn btn--primary btn--sm">Liên hệ ngay</Link>
+          <Link to="/lien-he"    className="btn btn--primary btn--sm">Liên hệ ngay</Link>
         </div>
+
+        {/* Cart button — always visible */}
+        <button className="navbar__cart-btn" onClick={openCart} aria-label="Giỏ hàng">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          {totalItems > 0 && <span className="navbar__cart-badge">{totalItems}</span>}
+        </button>
 
         <button className="navbar__hamburger" onClick={() => setMenuOpen(!menuOpen)}>
           <span/><span/><span/>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logoImg from '../asset/logo.jpg';
 
 export default function Footer() {
   return (
@@ -7,14 +8,7 @@ export default function Footer() {
         <div className="footer__grid">
           <div>
             <div className="footer__brand-name">
-              <div style={{ width:32, height:32, background:'linear-gradient(135deg,#4f46e5,#7c3aed)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              Sản phẩm số
+              <img src={logoImg} alt="MANAGE WORK" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} />
             </div>
             <p className="footer__brand-desc">
               Kho sản phẩm số hàng đầu Việt Nam. Khóa học, template, ebook và hơn thế nữa – tải về tức thì sau khi thanh toán.
@@ -55,7 +49,7 @@ export default function Footer() {
         </div>
 
         <div className="footer__bottom">
-          <span>© 2024 Sản phẩm số. Bảo lưu mọi quyền.</span>
+          <span>© 2024 MANAGE WORK. Bảo lưu mọi quyền.</span>
           <div className="footer__bottom-links">
             <a href="#">Chính sách bảo mật</a>
             <a href="#">Điều khoản dịch vụ</a>
