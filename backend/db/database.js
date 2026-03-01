@@ -41,6 +41,22 @@ function initDB() {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_ref TEXT UNIQUE NOT NULL,
+      customer_name TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_phone TEXT DEFAULT '',
+      note TEXT DEFAULT '',
+      items TEXT DEFAULT '[]',
+      amount REAL NOT NULL,
+      payment_method TEXT DEFAULT 'vnpay_qr',
+      payment_status TEXT DEFAULT 'pending',
+      vnp_transaction_no TEXT DEFAULT '',
+      paid_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   /* Migration: them cot moi neu DB cu chua co */

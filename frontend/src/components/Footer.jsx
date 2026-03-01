@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logoImg from '../asset/logo.jpg';
+import logoImg from '../asset/logo.png';
 
 export default function Footer() {
   return (
@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="footer__grid">
           <div>
             <div className="footer__brand-name">
-              <img src={logoImg} alt="MANAGE WORK" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} />
+              <img src={logoImg} alt="MANAGE WORK" style={{ height: '80px', width: 'auto', objectFit: 'contain' }} />
             </div>
             <p className="footer__brand-desc">
               Kho sản phẩm số hàng đầu Việt Nam. Khóa học, template, ebook và hơn thế nữa – tải về tức thì sau khi thanh toán.
@@ -30,7 +30,6 @@ export default function Footer() {
               <li><a href="#">Hướng dẫn mua hàng</a></li>
               <li><a href="#">Chính sách hoàn tiền</a></li>
               <li><a href="#">Câu hỏi thường gặp</a></li>
-              <li><a href="#">Liên hệ Zalo</a></li>
             </ul>
           </div>
 
@@ -40,11 +39,7 @@ export default function Footer() {
               <li><a href="#">📧 admin@sanphamso.vn</a></li>
               <li><a href="#">💬 Zalo: 0909 xxx xxx</a></li>
               <li><a href="#">Facebook Page</a></li>
-              <li><Link to="/admin/login">🔐 Đăng nhập admin</Link></li>
             </ul>
-            <Link to="/lien-he" className="btn btn--primary btn--sm" style={{ marginTop:16, display:'block', textAlign:'center' }}>
-              💬 Gửi yêu cầu tư vấn
-            </Link>
           </div>
         </div>
 

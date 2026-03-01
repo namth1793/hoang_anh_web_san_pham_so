@@ -1,15 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import api from '../utils/api';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
-
-/* ── Bank config (thay đổi thông tin thật tại đây) ─────────── */
-const BANK = {
-  name:    'MB Bank',
-  account: '0123456789',
-  owner:   'CONG TY SAN PHAM SO',
-};
 
 /* ── Step indicator ──────────────────────────────────────────── */
 function StepIndicator({ step }) {
@@ -144,11 +138,44 @@ function StepConfirm({ onNext }) {
 /* ── Step 2: QR Payment ──────────────────────────────────────── */
 function StepPayment({ customerInfo, onBack }) {
   const { items, totalPrice, clear } = useCart();
-  const navigate = useNavigate();
-  const [paid, setPaid] = useState(false);
+  const [qrData, setQrData]   = useState(null);  // { qrUrl, orderRef }
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+  const [paid, setPaid]       = useState(false);
 
-  const orderRef = `DH${Date.now().toString().slice(-8)}`;
-  const transferContent = `${orderRef} ${customerInfo.phone}`;
+  // Gọi API tạo đơn hàng + lấy URL thanh toán VNPay ngay khi vào bước này
+  useEffect(() => {
+    let cancelled = false;
+
+    const createOrder = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await api.post('/payment/create', {
+          amount:        totalPrice,
+          customerName:  customerInfo.name,
+          customerEmail: customerInfo.email,
+          customerPhone: customerInfo.phone,
+          note:          customerInfo.note || '',
+          items: items.map((item) => ({
+            id:       item.id,
+            name:     item.name,
+            price:    item.price,
+            quantity: item.quantity,
+          })),
+        });
+        if (!cancelled) setQrData(res.data); // { qrUrl, orderRef }
+      } catch (err) {
+        if (!cancelled)
+          setError(err.response?.data?.message || 'Không thể tạo mã QR. Vui lòng thử lại.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    createOrder();
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleConfirmPaid = () => {
     setPaid(true);
@@ -162,7 +189,7 @@ function StepPayment({ customerInfo, onBack }) {
       <p>Cảm ơn <strong>{customerInfo.name}</strong> đã mua hàng.</p>
       <p>Chúng tôi sẽ gửi link tải về email <strong>{customerInfo.email}</strong> sau khi xác nhận thanh toán.</p>
       <div className="checkout-success__info">
-        <span>Mã đơn hàng: <strong>{orderRef}</strong></span>
+        <span>Mã đơn hàng: <strong>{qrData?.orderRef}</strong></span>
       </div>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <Link to="/" className="btn btn--primary">Về trang chủ</Link>
@@ -173,64 +200,91 @@ function StepPayment({ customerInfo, onBack }) {
 
   return (
     <div className="qr-layout">
-      {/* Left: QR + Bank info */}
+      {/* Left: QR + thông tin thanh toán */}
       <div className="qr-box">
-        <h2 className="checkout-section-title" style={{ textAlign: 'center' }}>📱 Quét mã QR để thanh toán</h2>
+        <h2 className="checkout-section-title" style={{ textAlign: 'center' }}>Quét mã QR để thanh toán</h2>
 
-        <div className="qr-img-wrap">
-          <img
-            src={`https://placehold.co/280x280/4f46e5/FFFFFF?text=QR+Code`}
-            alt="QR thanh toán"
-            className="qr-img"
-          />
-          <p style={{ margin: '10px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Sử dụng app ngân hàng hoặc ví điện tử để quét
-          </p>
-        </div>
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div className="spinner" style={{ margin: '0 auto 16px' }} />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Đang tạo mã QR thanh toán...</p>
+          </div>
+        )}
 
-        {/* Bank info */}
-        <div className="qr-bank-info">
-          {[
-            { label: 'Ngân hàng',    value: BANK.name },
-            { label: 'Số tài khoản', value: BANK.account, copy: true },
-            { label: 'Chủ tài khoản', value: BANK.owner },
-            { label: 'Số tiền',      value: fmt(totalPrice), highlight: true },
-            { label: 'Nội dung CK',  value: transferContent, copy: true },
-          ].map((row) => (
-            <div key={row.label} className="qr-bank-row">
-              <span className="qr-bank-row__label">{row.label}</span>
-              <span className={`qr-bank-row__value${row.highlight ? ' qr-bank-row__value--hl' : ''}`}>
-                {row.value}
-              </span>
+        {/* Error */}
+        {error && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '16px', marginBottom: 16, color: '#dc2626', fontSize: '0.9rem' }}>
+            {error}
+            <button
+              className="btn btn--ghost btn--sm"
+              style={{ marginTop: 10, display: 'block' }}
+              onClick={() => { setError(''); setLoading(true); setQrData(null); }}
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* QR Code — render VNPay URL thành ảnh QR qua public API */}
+        {qrData && (
+          <>
+            <div className="qr-img-wrap">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData.qrUrl)}&size=280x280&ecc=M`}
+                alt="QR thanh toán VNPay"
+                className="qr-img"
+              />
+              <p style={{ margin: '10px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                Quét bằng app ngân hàng hoặc ví VNPay
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* Instructions */}
-        <div className="qr-steps">
-          {[
-            'Mở app ngân hàng / MoMo / ZaloPay',
-            'Chọn "Quét mã QR" hoặc "Chuyển khoản"',
-            `Nhập đúng nội dung: ${transferContent}`,
-            'Xác nhận và chuyển khoản',
-            'Nhấn "Tôi đã thanh toán" bên dưới',
-          ].map((s, i) => (
-            <div key={i} className="qr-step">
-              <span className="qr-step__num">{i + 1}</span>
-              <span>{s}</span>
+            {/* Thông tin giao dịch */}
+            <div className="qr-bank-info">
+              {[
+                { label: 'Mã đơn hàng', value: qrData.orderRef },
+                { label: 'Số tiền',     value: fmt(totalPrice), highlight: true },
+                { label: 'Cổng thanh toán', value: 'VNPay QR' },
+              ].map((row) => (
+                <div key={row.label} className="qr-bank-row">
+                  <span className="qr-bank-row__label">{row.label}</span>
+                  <span className={`qr-bank-row__value${row.highlight ? ' qr-bank-row__value--hl' : ''}`}>
+                    {row.value}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+
+            {/* Hướng dẫn */}
+            <div className="qr-steps">
+              {[
+                'Mở app ngân hàng hoặc ví VNPay',
+                'Chọn "Quét mã QR"',
+                'Quét mã QR trên màn hình',
+                'Kiểm tra số tiền và xác nhận thanh toán',
+                'Nhấn "Tôi đã thanh toán" bên dưới',
+              ].map((s, i) => (
+                <div key={i} className="qr-step">
+                  <span className="qr-step__num">{i + 1}</span>
+                  <span>{s}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Right: Order summary */}
       <div className="qr-summary">
-        <h2 className="checkout-section-title">📋 Tóm tắt đơn hàng</h2>
+        <h2 className="checkout-section-title">Tóm tắt đơn hàng</h2>
 
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 4px' }}>Mã đơn hàng</p>
-          <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{orderRef}</p>
-        </div>
+        {qrData && (
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 4px' }}>Mã đơn hàng</p>
+            <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{qrData.orderRef}</p>
+          </div>
+        )}
 
         <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {items.map((item) => (
@@ -247,11 +301,15 @@ function StepPayment({ customerInfo, onBack }) {
         </div>
 
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.85rem', color: '#15803d' }}>
-          ⏱️ Sau khi xác nhận thanh toán, link tải sản phẩm sẽ được gửi đến email <strong>{customerInfo.email}</strong>
+          Sau khi VNPay xác nhận, hệ thống tự động gửi thông báo đến email <strong>{customerInfo.email}</strong>
         </div>
 
-        <button className="btn btn--success btn--block btn--lg" onClick={handleConfirmPaid}>
-          ✅ Tôi đã thanh toán
+        <button
+          className="btn btn--success btn--block btn--lg"
+          onClick={handleConfirmPaid}
+          disabled={loading || !qrData}
+        >
+          Tôi đã thanh toán
         </button>
         <button className="btn btn--ghost btn--block btn--sm" style={{ marginTop: 8 }} onClick={onBack}>
           ← Quay lại

@@ -5,6 +5,7 @@ require('dotenv').config();
 const authRoutes    = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const contactRoutes = require('./routes/contact');
+const paymentRoutes = require('./routes/payment');
 const { initDB } = require('./db/database');
 
 const app = express();
@@ -21,9 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 initDB();
 
 // Routes
-app.use('/api/auth',    authRoutes);
+app.use('/api/auth',     authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/contact',  contactRoutes);
+app.use('/api/payment',  paymentRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', service: 'Sản phẩm số API', version: '1.0.0' });
