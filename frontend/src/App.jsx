@@ -1,19 +1,29 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
 import CartSidebar from './components/CartSidebar';
+import LoginModal from './components/LoginModal';
 import LandingPage from './pages/LandingPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CheckoutPage from './pages/CheckoutPage';
 import ContactPage from './pages/ContactPage';
 import GioiThieuPage from './pages/GioiThieuPage';
-import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, openLoginModal } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      openLoginModal();
+      navigate('/', { replace: true });
+    }
+  }, [user, loading]);
+
   if (loading) {
     return (
       <div className="loading-fullscreen">
@@ -21,7 +31,7 @@ function ProtectedRoute({ children }) {
       </div>
     );
   }
-  if (!user) return <Navigate to="/admin/login" replace />;
+  if (!user) return null;
   return children;
 }
 
@@ -39,8 +49,7 @@ export default function App() {
             <Route path="/lien-he"       element={<Layout><ContactPage /></Layout>} />
             <Route path="/gioi-thieu"    element={<Layout><GioiThieuPage /></Layout>} />
 
-            {/* Admin pages — no Layout (have their own styling) */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Admin */}
             <Route
               path="/admin"
               element={
@@ -52,6 +61,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <CartSidebar />
+          <LoginModal />
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>

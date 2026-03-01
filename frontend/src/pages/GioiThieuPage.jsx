@@ -4,10 +4,10 @@ export default function GioiThieuPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', padding: '56px 0 48px', color: 'white' }}>
+      <div style={{ background: '#014DA8', padding: '56px 0 48px', color: 'white' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h1 style={{ margin: '0 0 12px', fontSize: 'clamp(1.6rem,4vw,2.2rem)', fontWeight: 800 }}>
-            🏪 Về chúng tôi
+            Về chúng tôi
           </h1>
           <p style={{ margin: 0, opacity: 0.85, maxWidth: 560, marginInline: 'auto', lineHeight: 1.6 }}>
             Chúng tôi là kho sản phẩm số hàng đầu Việt Nam — khóa học, template, ebook và hơn thế nữa.

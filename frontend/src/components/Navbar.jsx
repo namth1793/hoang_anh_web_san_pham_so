@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import logoImg from '../asset/logo.png';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import logoImg from '../asset/logo.jpg';
 
 export default function Navbar() {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
   const { totalItems, openCart }  = useCart();
+  const { openLoginModal }        = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function Navbar() {
       <div className="container navbar__inner">
         {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <img src={logoImg} alt="MANAGE WORK" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
+          <img src={logoImg} alt="MANAGE WORK" style={{ height: '74px', width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Desktop + Mobile nav links */}
@@ -49,16 +51,16 @@ export default function Navbar() {
             Liên hệ
           </Link>
           {menuOpen && (
-            <Link to="/admin/login" className="btn btn--outline-white btn--sm" onClick={close}>
+            <button className="btn btn--outline-white btn--sm" onClick={() => { close(); openLoginModal(); }}>
               Đăng nhập admin
-            </Link>
+            </button>
           )}
         </div>
 
         {/* Right actions — desktop only */}
         <div className="navbar__actions">
-          <Link to="/admin/login" className="btn btn--outline-white btn--sm">Đăng nhập admin</Link>
-          <Link to="/lien-he"    className="btn btn--primary btn--sm">Liên hệ ngay</Link>
+          <button className="btn btn--outline btn--sm" onClick={openLoginModal}>Đăng nhập admin</button>
+          <Link to="/lien-he" className="btn btn--primary btn--sm">Liên hệ ngay</Link>
         </div>
 
         {/* Cart button — always visible */}

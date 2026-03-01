@@ -18,7 +18,7 @@ export default function Footer() {
           <div>
             <div className="footer__col-title">Danh mục</div>
             <ul className="footer__links">
-              {['🎓 Khóa học','🎨 Template','📚 Ebook','🖼️ Đồ họa','📊 Biểu mẫu'].map((c) => (
+              {['Khóa học','Template','Ebook','Đồ họa','Biểu mẫu'].map((c) => (
                 <li key={c}><Link to="/san-pham">{c}</Link></li>
               ))}
             </ul>

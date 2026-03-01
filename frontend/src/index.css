@@ -103,7 +103,7 @@ input, textarea, select { font-family: inherit; }
   white-space: nowrap;
 }
 .btn--primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: #014EA8;
   color: var(--white);
   box-shadow: 0 4px 15px rgba(27, 79, 160, 0.4);
 }
@@ -112,7 +112,7 @@ input, textarea, select { font-family: inherit; }
   box-shadow: 0 6px 20px rgba(27, 79, 160, 0.5);
 }
 .btn--outline {
-  background: transparent;
+  background: white;
   color: var(--primary);
   border: 2px solid var(--primary);
 }
@@ -156,14 +156,15 @@ input, textarea, select { font-family: inherit; }
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 20px 0;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   transition: all 0.3s ease;
 }
 .navbar--scrolled {
-  padding: 14px 0;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  padding: 3px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
 .navbar__inner {
   display: flex;
@@ -174,9 +175,7 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--white);
+  color: var(--dark-2);
   flex-shrink: 0;
 }
 .navbar__logo-icon {
@@ -197,10 +196,11 @@ input, textarea, select { font-family: inherit; }
 .navbar__links a {
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.8);
+  color: var(--text);
   transition: color 0.2s;
 }
-.navbar__links a:hover { color: var(--white); }
+.navbar__links a:hover { color: var(--primary); }
+.navbar__link--active { color: var(--primary) !important; font-weight: 700; }
 .navbar__actions {
   display: flex;
   align-items: center;
@@ -218,7 +218,7 @@ input, textarea, select { font-family: inherit; }
   display: block;
   width: 24px;
   height: 2px;
-  background: var(--white);
+  background: var(--dark-2);
   border-radius: 2px;
   transition: all 0.3s;
 }
@@ -467,15 +467,15 @@ input, textarea, select { font-family: inherit; }
 /* ── 6b. Hero Banner (image) ───────────────────────────────── */
 .hero-banner {
   background: var(--white);
-  padding: 96px 0 48px;
+  padding: 26px 0 48px;
   text-align: center;
 }
 .hero-banner__img {
-  width: 100%;
+  width: 70%;
   max-width: 1100px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
-  margin: 0 auto 40px;
+  margin: 0 auto 20px;
   display: block;
 }
 .hero-banner__actions {
@@ -542,14 +542,14 @@ input, textarea, select { font-family: inherit; }
   left: calc(16.66% + 20px);
   right: calc(16.66% + 20px);
   height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  background: linear-gradient(90deg, var(--secondary));
   opacity: 0.3;
 }
 .step { text-align: center; padding: 0 16px; }
 .step__num {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, var(--secondary) 100%);
   color: var(--white);
   font-size: 1.5rem;
   font-weight: 800;
@@ -764,8 +764,9 @@ input, textarea, select { font-family: inherit; }
 
 /* ── 13. Footer ────────────────────────────────────────────── */
 .footer {
-  background: #070e1a;
-  color: rgba(255,255,255,0.55);
+  background: var(--white);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
   padding: 64px 0 32px;
 }
 .footer__grid {
@@ -777,7 +778,7 @@ input, textarea, select { font-family: inherit; }
 .footer__brand-name {
   font-size: 1.2rem;
   font-weight: 800;
-  color: var(--white);
+  color: var(--dark-2);
   margin-bottom: 12px;
   display: flex; align-items: center; gap: 10px;
 }
@@ -787,18 +788,18 @@ input, textarea, select { font-family: inherit; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.8);
+  color: var(--dark-2);
   margin-bottom: 18px;
 }
 .footer__links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .footer__links a {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-muted);
   transition: color 0.2s;
 }
-.footer__links a:hover { color: var(--white); }
+.footer__links a:hover { color: var(--primary); }
 .footer__bottom {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--border);
   padding-top: 28px;
   display: flex;
   justify-content: space-between;
@@ -809,10 +810,10 @@ input, textarea, select { font-family: inherit; }
 }
 .footer__bottom-links { display: flex; gap: 24px; }
 .footer__bottom-links a {
-  color: rgba(255,255,255,0.4);
+  color: var(--text-muted);
   transition: color 0.2s;
 }
-.footer__bottom-links a:hover { color: rgba(255,255,255,0.7); }
+.footer__bottom-links a:hover { color: var(--primary); }
 
 /* ── 14. Admin Layout ──────────────────────────────────────── */
 .admin-layout {
@@ -823,7 +824,7 @@ input, textarea, select { font-family: inherit; }
 .admin-sidebar {
   width: 260px;
   min-height: 100vh;
-  background: #1e1b4b;
+  background: #0D2456;
   color: var(--white);
   display: flex;
   flex-direction: column;
@@ -850,19 +851,19 @@ input, textarea, select { font-family: inherit; }
 }
 .admin-sidebar__user {
   padding: 16px 24px;
-  background: rgba(79,70,229,0.15);
+  background: rgba(27,79,160,0.2);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   display: flex; align-items: center; gap: 12px;
 }
 .admin-sidebar__avatar {
   width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--secondary));
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.9rem; font-weight: 700; color: var(--white);
 }
 .admin-sidebar__username { font-size: 0.85rem; font-weight: 600; color: var(--white); }
-.admin-sidebar__role { font-size: 0.72rem; color: #a5b4fc; }
+.admin-sidebar__role { font-size: 0.72rem; color: #93C5FD; }
 .admin-sidebar__nav { padding: 16px 0; flex: 1; }
 .admin-sidebar__section {
   padding: 10px 24px 6px;
@@ -885,7 +886,7 @@ input, textarea, select { font-family: inherit; }
 }
 .admin-nav-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
 .admin-nav-item--active {
-  background: rgba(79,70,229,0.25);
+  background: rgba(27,79,160,0.3);
   color: var(--white);
   border-right: 3px solid var(--primary);
 }
@@ -994,7 +995,7 @@ input, textarea, select { font-family: inherit; }
 .table-search:focus-within {
   border-color: var(--primary);
   background: var(--white);
-  box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+  box-shadow: 0 0 0 3px rgba(27,79,160,0.12);
 }
 .table-search input {
   border: none;
@@ -1040,7 +1041,7 @@ input, textarea, select { font-family: inherit; }
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+  box-shadow: 0 0 0 3px rgba(27,79,160,0.12);
 }
 .form-textarea { resize: vertical; min-height: 100px; }
 .form-hint { font-size: 0.78rem; color: var(--text-muted); }
@@ -1068,7 +1069,7 @@ input, textarea, select { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--dark) 0%, #1e1b4b 50%, var(--dark) 100%);
+  background: linear-gradient(135deg, var(--dark) 0%, #0D2456 50%, var(--dark) 100%);
   padding: 24px;
   position: relative;
   overflow: hidden;
@@ -1077,7 +1078,7 @@ input, textarea, select { font-family: inherit; }
   content: '';
   position: absolute;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(27,79,160,0.2) 0%, transparent 70%);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -1115,11 +1116,13 @@ input, textarea, select { font-family: inherit; }
   font-weight: 700;
   color: var(--white);
   margin-bottom: 6px;
+  text-align: center;
 }
 .login-subtitle {
   font-size: 0.88rem;
   color: rgba(255,255,255,0.45);
   margin-bottom: 28px;
+  text-align: center
 }
 .login-form { display: flex; flex-direction: column; gap: 18px; }
 .login-label {
@@ -1142,9 +1145,9 @@ input, textarea, select { font-family: inherit; }
 }
 .login-input::placeholder { color: rgba(255,255,255,0.3); }
 .login-input:focus {
-  border-color: rgba(79,70,229,0.7);
-  background: rgba(79,70,229,0.08);
-  box-shadow: 0 0 0 3px rgba(79,70,229,0.18);
+  border-color: rgba(27,79,160,0.7);
+  background: rgba(27,79,160,0.08);
+  box-shadow: 0 0 0 3px rgba(27,79,160,0.18);
 }
 .login-error {
   display: flex; align-items: center; gap: 8px;
@@ -1156,23 +1159,74 @@ input, textarea, select { font-family: inherit; }
   font-size: 0.85rem;
 }
 .login-hint {
-  background: rgba(79,70,229,0.1);
-  border: 1px solid rgba(79,70,229,0.2);
+  background: rgba(27,79,160,0.1);
+  border: 1px solid rgba(27,79,160,0.2);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   font-size: 0.82rem;
   color: rgba(255,255,255,0.5);
   margin-top: 8px;
 }
-.login-hint strong { color: #a5b4fc; }
+.login-hint strong { color: #93C5FD; }
 .login-back {
   text-align: center;
   margin-top: 20px;
   font-size: 0.85rem;
   color: rgba(255,255,255,0.4);
 }
-.login-back a { color: #a5b4fc; font-weight: 600; }
+.login-back a { color: #93C5FD; font-weight: 600; }
 .login-back a:hover { color: var(--white); }
+
+/* ── 17b. Login Modal (popup) ──────────────────────────────── */
+.login-modal-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: var(--shadow-xl);
+  animation: modal-in 0.22s ease;
+}
+.login-modal__close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.login-modal__close:hover { background: var(--border); color: var(--dark-2); }
+.login-modal__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--dark-2);
+  margin-bottom: 7px;
+  display: block;
+}
+.login-modal__input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.2s;
+}
+.login-modal__input::placeholder { color: var(--text-muted); }
+.login-modal__input:focus {
+  border-color: var(--primary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(27,79,160,0.12);
+}
 
 /* ── 18. Badges ────────────────────────────────────────────── */
 .badge {
@@ -1286,7 +1340,7 @@ input, textarea, select { font-family: inherit; }
 }
 .spinner {
   width: 40px; height: 40px;
-  border: 3px solid rgba(79,70,229,0.2);
+  border: 3px solid rgba(27,79,160,0.2);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -1520,17 +1574,17 @@ input, textarea, select { font-family: inherit; }
 /* ── 24. Navbar Cart ────────────────────────────────────────── */
 .navbar__cart-btn {
   position: relative;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: var(--primary-light);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  color: white;
+  color: var(--primary);
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: background 0.2s;
   flex-shrink: 0;
 }
-.navbar__cart-btn:hover { background: rgba(255,255,255,0.22); }
+.navbar__cart-btn:hover { background: var(--primary); color: white; }
 .navbar__cart-badge {
   position: absolute;
   top: -6px; right: -6px;
@@ -1542,7 +1596,7 @@ input, textarea, select { font-family: inherit; }
   border-radius: 9999px;
   display: flex; align-items: center; justify-content: center;
   padding: 0 4px;
-  border: 2px solid var(--dark);
+  border: 2px solid white;
 }
 
 /* ── 25. Cart Sidebar ───────────────────────────────────────── */

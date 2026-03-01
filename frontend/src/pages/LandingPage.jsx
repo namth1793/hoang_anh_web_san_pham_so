@@ -8,7 +8,7 @@ function HeroSection() {
       <div className="container">
         <img src={bannerImg} alt="MANAGE WORK – Manage Tasks, Boost Productivity" className="hero-banner__img" />
         <div className="hero-banner__actions">
-          <Link to="/lien-he"    className="btn btn--primary btn--lg">💬 Liên hệ tư vấn ngay</Link>
+          <Link to="/san-pham"    className="btn btn--primary btn--lg">Xem Sản Phẩm</Link>
           <Link to="/gioi-thieu" className="btn btn--outline btn--lg">Tìm hiểu thêm</Link>
         </div>
       </div>
@@ -152,7 +152,7 @@ function CtaSection() {
           Hơn 500 sản phẩm số chất lượng cao đang chờ bạn. Giao hàng tức thì, dùng mãi mãi.
         </p>
         <div className="cta-actions">
-          <Link to="/lien-he"    className="btn btn--primary btn--lg">💬 Liên hệ tư vấn</Link>
+          <Link to="/lien-he"    className="btn btn--outline btn--lg">Liên hệ tư vấn</Link>
           <Link to="/gioi-thieu" className="btn btn--outline-white btn--lg">Tìm hiểu thêm</Link>
         </div>
         <p className="cta-note">Hoàn tiền 100% trong 7 ngày · Hỗ trợ tiếng Việt · Thanh toán an toàn</p>

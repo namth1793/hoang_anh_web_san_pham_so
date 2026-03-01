@@ -146,10 +146,10 @@ export default function ProductsPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-light, #f8fafc)' }}>
       {/* Page Header */}
-      <div style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', padding: '56px 0 40px', color: 'white' }}>
+      <div style={{ background: '#014DA8', padding: '56px 0 40px', color: 'white' }}>
         <div className="container">
-          <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem,4vw,2rem)', fontWeight: 800 }}>🛍️ Tất cả sản phẩm số</h1>
-          <p style={{ margin: '10px 0 0', opacity: 0.8 }}>Tải về tức thì sau khi thanh toán. Dùng mãi mãi.</p>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem,4vw,2rem)', fontWeight: 800, textAlign: 'center' }}>Tất cả sản phẩm số</h1>
+          <p style={{ margin: '10px 0 0', opacity: 0.8, textAlign: 'center' }}>Tải về tức thì sau khi thanh toán. Dùng mãi mãi.</p>
         </div>
       </div>
 

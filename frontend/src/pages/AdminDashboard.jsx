@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
@@ -39,30 +39,6 @@ function AdminSidebar({ view, setView, onLogout, user }) {
 
   return (
     <aside className="admin-sidebar">
-      {/* Logo */}
-      <div className="admin-sidebar__logo">
-        <div
-          style={{
-            width: 32, height: 32,
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-            borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-            <rect x="14" y="14" width="7" height="7" rx="1" />
-          </svg>
-        </div>
-        <div>
-          <div className="admin-sidebar__logo-text">Sản phẩm số</div>
-          <div className="admin-sidebar__logo-sub">Admin Portal</div>
-        </div>
-      </div>
-
       {/* User info */}
       <div className="admin-sidebar__user">
         <div className="admin-sidebar__avatar">

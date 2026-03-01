@@ -1,19 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
-export default function AdminLogin() {
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
+export default function LoginModal() {
+  const { loginModalOpen, closeLoginModal, login } = useAuth();
+  const [form, setForm]     = useState({ username: '', password: '' });
+  const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  // Nếu đã đăng nhập, chuyển thẳng vào dashboard
+  // Reset form khi mở modal
   useEffect(() => {
-    if (user) navigate('/admin', { replace: true });
-  }, [user, navigate]);
+    if (loginModalOpen) {
+      setForm({ username: '', password: '' });
+      setError('');
+    }
+  }, [loginModalOpen]);
+
+  // Đóng khi nhấn Escape
+  useEffect(() => {
+    const fn = (e) => { if (e.key === 'Escape') closeLoginModal(); };
+    if (loginModalOpen) document.addEventListener('keydown', fn);
+    return () => document.removeEventListener('keydown', fn);
+  }, [loginModalOpen, closeLoginModal]);
+
+  if (!loginModalOpen) return null;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -30,7 +42,8 @@ export default function AdminLogin() {
     try {
       const res = await api.post('/auth/login', form);
       login(res.data.token, res.data.user);
-      navigate('/admin', { replace: true });
+      closeLoginModal();
+      navigate('/admin');
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
@@ -39,10 +52,19 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h2 className="login-title">Đăng nhập Admin</h2>
-        <p className="login-subtitle">Chỉ dành cho quản trị viên được cấp quyền</p>
+    <div className="modal-overlay" onClick={closeLoginModal} style={{ zIndex: 10000 }}>
+      <div
+        className="login-modal-card"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Đăng nhập Admin"
+      >
+        {/* Nút đóng */}
+        <button className="login-modal__close" onClick={closeLoginModal} aria-label="Đóng">×</button>
+
+        <h2 className="login-title" style={{ color: 'var(--dark-2)' }}>Đăng nhập Admin</h2>
+        <p className="login-subtitle" style={{ color: 'var(--text-muted)' }}>Chỉ dành cho quản trị viên được cấp quyền</p>
 
         {error && (
           <div className="login-error">
@@ -57,14 +79,14 @@ export default function AdminLogin() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div>
-            <label className="login-label" htmlFor="username">
+            <label className="login-modal__label" htmlFor="modal-username">
               Tên đăng nhập hoặc Email
             </label>
             <input
-              id="username"
+              id="modal-username"
               name="username"
               type="text"
-              className="login-input"
+              className="login-modal__input"
               placeholder="admin"
               value={form.username}
               onChange={handleChange}
@@ -72,16 +94,15 @@ export default function AdminLogin() {
               autoFocus
             />
           </div>
-
           <div>
-            <label className="login-label" htmlFor="password">
+            <label className="login-modal__label" htmlFor="modal-password">
               Mật khẩu
             </label>
             <input
-              id="password"
+              id="modal-password"
               name="password"
               type="password"
-              className="login-input"
+              className="login-modal__input"
               placeholder="••••••••"
               value={form.password}
               onChange={handleChange}
@@ -97,10 +118,7 @@ export default function AdminLogin() {
           >
             {loading ? (
               <>
-                <span
-                  className="spinner"
-                  style={{ width: 18, height: 18, borderWidth: 2 }}
-                />
+                <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
                 Đang đăng nhập...
               </>
             ) : (
@@ -115,10 +133,6 @@ export default function AdminLogin() {
             )}
           </button>
         </form>
-
-        <div className="login-back">
-          <Link to="/">← Quay về trang chủ</Link>
-        </div>
       </div>
     </div>
   );

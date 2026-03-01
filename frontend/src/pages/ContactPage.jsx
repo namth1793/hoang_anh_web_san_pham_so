@@ -40,10 +40,10 @@ export default function ContactPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Hero header */}
-      <div style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', padding: '56px 0 48px', color: 'white' }}>
+      <div style={{ background: '#014DA8', padding: '56px 0 48px', color: 'white' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h1 style={{ margin: '0 0 12px', fontSize: 'clamp(1.6rem,4vw,2.2rem)', fontWeight: 800 }}>
-            💬 Liên hệ tư vấn
+            Liên hệ tư vấn
           </h1>
           <p style={{ margin: 0, opacity: 0.85, maxWidth: 480, marginInline: 'auto', lineHeight: 1.6 }}>
             Chúng tôi luôn sẵn sàng hỗ trợ bạn. Điền thông tin bên dưới và chúng tôi sẽ phản hồi trong vòng 24 giờ.

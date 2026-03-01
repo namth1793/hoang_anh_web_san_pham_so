@@ -5,6 +5,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('sps_token');
@@ -32,8 +33,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const openLoginModal  = () => setLoginModalOpen(true);
+  const closeLoginModal = () => setLoginModalOpen(false);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, loginModalOpen, openLoginModal, closeLoginModal }}>
       {children}
     </AuthContext.Provider>
   );
