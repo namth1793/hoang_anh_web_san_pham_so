@@ -10,9 +10,10 @@
  *   SEPAY_API_TOKEN, ADMIN_EMAIL, MAIL_USER, MAIL_PASS
  */
 
-const express    = require('express');
-const nodemailer = require('nodemailer');
-const { getDB }  = require('../db/database');
+const express        = require('express');
+const nodemailer     = require('nodemailer');
+const { getDB }      = require('../db/database');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -159,10 +160,22 @@ router.post('/webhook', async (req, res) => {
     amount:        transferAmount,
     customerName:  order.customer_name,
     customerEmail: order.customer_email,
+    customerPhone: order.customer_phone,
+    items:         JSON.parse(order.items || '[]'),
     paidAt,
   }).catch((err) => console.error('Lỗi gửi email:', err.message));
 
   return res.json({ success: true, message: 'Payment confirmed' });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   GET /api/payment/orders  (Admin only)
+   Lấy toàn bộ danh sách đơn hàng, mới nhất trước
+   ═══════════════════════════════════════════════════════════════ */
+router.get('/orders', authMiddleware, (req, res) => {
+  const db     = getDB();
+  const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC').all();
+  return res.json(orders.map((o) => ({ ...o, items: JSON.parse(o.items || '[]') })));
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -189,7 +202,7 @@ router.get('/status/:orderRef', (req, res) => {
 /* ═══════════════════════════════════════════════════════════════
    GỬI EMAIL THÔNG BÁO ADMIN
    ═══════════════════════════════════════════════════════════════ */
-async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail, paidAt }) {
+async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail, customerPhone, items, paidAt }) {
   const adminEmail = process.env.ADMIN_EMAIL;
   const mailUser   = process.env.MAIL_USER;
   const mailPass   = process.env.MAIL_PASS;
@@ -202,7 +215,8 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
     console.log(`To:         ${adminEmail}`);
     console.log(`Đơn hàng:   ${orderRef}`);
     console.log(`Số tiền:    ${Number(amount).toLocaleString('vi-VN')}đ`);
-    console.log(`Khách hàng: ${customerName} <${customerEmail}>`);
+    console.log(`Khách hàng: ${customerName} <${customerEmail}> | ${customerPhone || ''}`);
+    console.log(`Sản phẩm:   ${(items || []).map((i) => `${i.name} x${i.quantity}`).join(', ')}`);
     console.log(`Thời gian:  ${payTime}`);
     console.log('--------------------------------------\n');
     return;
@@ -212,6 +226,18 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
     service: 'gmail',
     auth: { user: mailUser, pass: mailPass },
   });
+
+  const itemsHtml = (items || []).length > 0
+    ? `<tr style="border-bottom:1px solid #f3f4f6">
+        <td style="padding:10px 0;color:#6b7280;vertical-align:top">Sản phẩm</td>
+        <td style="padding:10px 0">
+          ${(items || []).map((i) =>
+            `<div style="margin-bottom:4px">${i.name} <span style="color:#6b7280">×${i.quantity}</span>
+             <span style="float:right;font-weight:600">${Number(i.price * i.quantity).toLocaleString('vi-VN')}đ</span></div>`
+          ).join('')}
+        </td>
+      </tr>`
+    : '';
 
   const html = `
   <div style="font-family:sans-serif;max-width:580px;margin:auto;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
@@ -237,6 +263,11 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
           <td style="padding:10px 0;color:#6b7280">Email KH</td>
           <td style="padding:10px 0">${customerEmail}</td>
         </tr>
+        ${customerPhone ? `<tr style="border-bottom:1px solid #f3f4f6">
+          <td style="padding:10px 0;color:#6b7280">SĐT KH</td>
+          <td style="padding:10px 0">${customerPhone}</td>
+        </tr>` : ''}
+        ${itemsHtml}
         <tr style="border-bottom:1px solid #f3f4f6">
           <td style="padding:10px 0;color:#6b7280">Phương thức</td>
           <td style="padding:10px 0">Chuyển khoản ngân hàng (SePay)</td>

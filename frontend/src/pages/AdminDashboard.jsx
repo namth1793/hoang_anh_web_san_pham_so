@@ -7,6 +7,11 @@ import api from '../utils/api';
 const formatPrice = (price) =>
   new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 
+const formatDate = (str) => {
+  if (!str) return '—';
+  return new Date(str).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+};
+
 /* ── Sidebar ────────────────────────────────────────────────── */
 function AdminSidebar({ view, setView, onLogout, user }) {
   const navItems = [
@@ -32,6 +37,17 @@ function AdminSidebar({ view, setView, onLogout, user }) {
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="16" />
           <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+      ),
+    },
+    {
+      id: 'orders',
+      label: 'Đơn hàng',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
         </svg>
       ),
     },
@@ -631,6 +647,142 @@ function ProductForm({ editProduct, onDone, onCancel }) {
   );
 }
 
+/* ── Order List ──────────────────────────────────────────────── */
+function OrderList() {
+  const [orders, setOrders]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
+
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/payment/orders');
+      setOrders(res.data);
+    } catch {
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const paidCount    = orders.filter((o) => o.payment_status === 'paid').length;
+  const totalRevenue = orders.filter((o) => o.payment_status === 'paid').reduce((s, o) => s + Number(o.amount), 0);
+
+  return (
+    <>
+      <div className="admin-topbar">
+        <div>
+          <h1 className="admin-page-title">Đơn hàng</h1>
+          <p className="admin-page-sub">{orders.length} đơn hàng · {paidCount} đã thanh toán · Doanh thu: {formatPrice(totalRevenue)}</p>
+        </div>
+        <button className="btn btn--ghost btn--sm" onClick={fetchOrders}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 4v6h-6" /><path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          Tải lại
+        </button>
+      </div>
+
+      <div className="admin-card">
+        {loading ? (
+          <div className="loading-inline"><div className="spinner" /></div>
+        ) : orders.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">📋</div>
+            <div className="empty-state__text">Chưa có đơn hàng nào.</div>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Số tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày tạo</th>
+                  <th>Thanh toán lúc</th>
+                  <th>Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o, i) => (
+                  <>
+                    <tr key={o.id}>
+                      <td style={{ color: '#94a3b8', fontWeight: 500 }}>{i + 1}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem' }}>{o.order_ref}</td>
+                      <td>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{o.customer_name}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{o.customer_email}</div>
+                        {o.customer_phone && <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{o.customer_phone}</div>}
+                      </td>
+                      <td style={{ fontWeight: 700, color: '#059669' }}>{formatPrice(o.amount)}</td>
+                      <td>
+                        {o.payment_status === 'paid' ? (
+                          <span style={{ background: '#dcfce7', color: '#15803d', padding: '3px 10px', borderRadius: 9999, fontSize: '0.78rem', fontWeight: 600 }}>
+                            ✅ Đã thanh toán
+                          </span>
+                        ) : (
+                          <span style={{ background: '#fef9c3', color: '#854d0e', padding: '3px 10px', borderRadius: 9999, fontSize: '0.78rem', fontWeight: 600 }}>
+                            ⏳ Chờ thanh toán
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{formatDate(o.created_at)}</td>
+                      <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{formatDate(o.paid_at)}</td>
+                      <td>
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => setExpanded(expanded === o.id ? null : o.id)}
+                        >
+                          {expanded === o.id ? 'Ẩn' : 'Xem'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expanded === o.id && (
+                      <tr key={`${o.id}-detail`}>
+                        <td colSpan={8} style={{ background: '#f8fafc', padding: '12px 20px' }}>
+                          {o.note && <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#64748b' }}>Ghi chú: {o.note}</p>}
+                          {o.items && o.items.length > 0 ? (
+                            <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ color: '#94a3b8' }}>
+                                  <th style={{ textAlign: 'left', padding: '4px 8px' }}>Sản phẩm</th>
+                                  <th style={{ textAlign: 'center', padding: '4px 8px' }}>Số lượng</th>
+                                  <th style={{ textAlign: 'right', padding: '4px 8px' }}>Thành tiền</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {o.items.map((item, idx) => (
+                                  <tr key={idx} style={{ borderTop: '1px solid #e2e8f0' }}>
+                                    <td style={{ padding: '6px 8px' }}>{item.name}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'center' }}>{item.quantity}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600 }}>{formatPrice(item.price * item.quantity)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>Không có thông tin sản phẩm.</p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 /* ── Admin Dashboard (main) ──────────────────────────────────── */
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -668,7 +820,7 @@ export default function AdminDashboard() {
     setEditProduct(null);
   };
 
-  const sidebarView = view === 'add' ? 'add' : 'list';
+  const sidebarView = view === 'add' ? 'add' : view === 'orders' ? 'orders' : 'list';
 
   return (
     <div className="admin-layout">
@@ -676,6 +828,7 @@ export default function AdminDashboard() {
         view={sidebarView}
         setView={(v) => {
           if (v === 'add') handleAddNew();
+          else if (v === 'orders') { setView('orders'); setEditProduct(null); }
           else { setView('list'); setEditProduct(null); }
         }}
         onLogout={handleLogout}
@@ -711,6 +864,8 @@ export default function AdminDashboard() {
             onCancel={handleFormCancel}
           />
         )}
+
+        {view === 'orders' && <OrderList />}
       </main>
     </div>
   );

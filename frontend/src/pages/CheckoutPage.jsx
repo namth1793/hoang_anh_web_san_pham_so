@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import api from '../utils/api';
@@ -328,18 +328,11 @@ function StepPayment({ customerInfo, onBack }) {
           <span className="checkout-subtotal__price">{fmt(totalPrice)}</span>
         </div>
 
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.85rem', color: '#15803d' }}>
-          Sau khi chuyển khoản thành công, hệ thống tự động xác nhận và gửi thông báo đến email <strong>{customerInfo.email}</strong>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.85rem', color: '#15803d', textAlign: 'center' }}>
+          Sau khi chuyển khoản thành công, hệ thống tự động xác nhận đơn hàng
         </div>
 
-        <button
-          className="btn btn--success btn--block btn--lg"
-          onClick={handleConfirmPaid}
-          disabled={loading || !qrData}
-        >
-          Tôi đã thanh toán
-        </button>
-        <button className="btn btn--ghost btn--block btn--sm" style={{ marginTop: 8 }} onClick={onBack}>
+        <button className="btn btn--ghost btn--block btn--sm" onClick={onBack}>
           ← Quay lại
         </button>
       </div>
