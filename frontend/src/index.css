@@ -542,14 +542,14 @@ input, textarea, select { font-family: inherit; }
   left: calc(16.66% + 20px);
   right: calc(16.66% + 20px);
   height: 2px;
-  background: linear-gradient(90deg, var(--secondary));
+  background: linear-gradient(190deg, var(--primary), var(--secondary));
   opacity: 0.3;
 }
 .step { text-align: center; padding: 0 16px; }
 .step__num {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--secondary) 100%);
+  background: linear-gradient(135deg, var(--primary), var(--secondary) 100%);
   color: var(--white);
   font-size: 1.5rem;
   font-weight: 800;
