@@ -166,6 +166,27 @@ router.post('/webhook', async (req, res) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
+   GET /api/payment/status/:orderRef
+   Frontend polling để kiểm tra đơn hàng đã được thanh toán chưa
+   ═══════════════════════════════════════════════════════════════ */
+router.get('/status/:orderRef', (req, res) => {
+  const { orderRef } = req.params;
+  const db    = getDB();
+  const order = db.prepare('SELECT order_ref, payment_status, amount, paid_at FROM orders WHERE order_ref = ?').get(orderRef);
+
+  if (!order) {
+    return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+  }
+
+  return res.json({
+    orderRef:      order.order_ref,
+    status:        order.payment_status,  // pending | paid | failed
+    amount:        order.amount,
+    paidAt:        order.paid_at || null,
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
    GỬI EMAIL THÔNG BÁO ADMIN
    ═══════════════════════════════════════════════════════════════ */
 async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail, paidAt }) {

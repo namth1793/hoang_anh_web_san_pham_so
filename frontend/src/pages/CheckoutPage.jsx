@@ -182,6 +182,25 @@ function StepPayment({ customerInfo, onBack }) {
     clear();
   };
 
+  // ── Polling: tự động xác nhận khi SePay webhook báo paid ──────
+  useEffect(() => {
+    if (!qrData?.orderRef || paid) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/payment/status/${qrData.orderRef}`);
+        if (res.data.status === 'paid') {
+          clearInterval(interval);
+          handleConfirmPaid();
+        }
+      } catch {
+        // ignore network errors — keep polling
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [qrData?.orderRef, paid]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (paid) return (
     <div className="checkout-success">
       <div className="checkout-success__icon">🎉</div>
@@ -234,7 +253,14 @@ function StepPayment({ customerInfo, onBack }) {
                 src={qrData.qrUrl}
                 alt="QR chuyển khoản ngân hàng"
                 className="qr-img"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
               />
+              <div style={{ display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 200, height: 200, background: '#f8fafc', border: '2px dashed #cbd5e1', borderRadius: 8, fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>
+                ⚠️ Không tải được QR<br/>Vui lòng chuyển khoản theo thông tin bên dưới
+              </div>
               <p style={{ margin: '10px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                 Quét bằng app ngân hàng bất kỳ
               </p>
