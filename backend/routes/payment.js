@@ -11,7 +11,7 @@
  */
 
 const express        = require('express');
-const nodemailer     = require('nodemailer');
+const { Resend }     = require('resend');
 const { getDB }      = require('../db/database');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -203,14 +203,13 @@ router.get('/status/:orderRef', (req, res) => {
    GỬI EMAIL THÔNG BÁO ADMIN
    ═══════════════════════════════════════════════════════════════ */
 async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail, customerPhone, items, paidAt }) {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const mailUser   = process.env.MAIL_USER;
-  const mailPass   = process.env.MAIL_PASS;
+  const adminEmail   = process.env.ADMIN_EMAIL;
+  const resendApiKey = process.env.RESEND_API_KEY;
 
   const payTime = new Date(paidAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-  // Preview mode khi chưa cấu hình SMTP
-  if (!mailUser || mailUser === 'youremail@gmail.com' || !mailPass) {
+  // Preview mode khi chưa cấu hình Resend
+  if (!resendApiKey || resendApiKey === 'your_resend_api_key_here') {
     console.log('\n--- [PAYMENT EMAIL – PREVIEW MODE] ---');
     console.log(`To:         ${adminEmail}`);
     console.log(`Đơn hàng:   ${orderRef}`);
@@ -222,10 +221,7 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: mailUser, pass: mailPass },
-  });
+  const resend = new Resend(resendApiKey);
 
   const itemsHtml = (items || []).length > 0
     ? `<tr style="border-bottom:1px solid #f3f4f6">
@@ -283,14 +279,14 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
     </div>
   </div>`;
 
-  await transporter.sendMail({
-    from:    `"MANAGE WORK" <${mailUser}>`,
+  await resend.emails.send({
+    from:    'MANAGE WORK <onboarding@resend.dev>',
     to:      adminEmail,
     subject: `[Đơn hàng] ${orderRef} – Thanh toán thành công`,
     html,
   });
 
-  console.log(`Email thông báo đã gửi tới ${adminEmail}`);
+  console.log(`[Resend] Email thông báo đã gửi tới ${adminEmail}`);
 }
 
 module.exports = router;
