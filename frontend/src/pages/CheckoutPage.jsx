@@ -226,30 +226,32 @@ function StepPayment({ customerInfo, onBack }) {
           </div>
         )}
 
-        {/* QR Code — render VNPay URL thành ảnh QR qua public API */}
+        {/* QR Code VietQR — hiển thị trực tiếp từ img.vietqr.io */}
         {qrData && (
           <>
             <div className="qr-img-wrap">
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData.qrUrl)}&size=280x280&ecc=M`}
-                alt="QR thanh toán VNPay"
+                src={qrData.qrUrl}
+                alt="QR chuyển khoản ngân hàng"
                 className="qr-img"
               />
               <p style={{ margin: '10px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                Quét bằng app ngân hàng hoặc ví VNPay
+                Quét bằng app ngân hàng bất kỳ
               </p>
             </div>
 
-            {/* Thông tin giao dịch */}
+            {/* Thông tin chuyển khoản */}
             <div className="qr-bank-info">
               {[
-                { label: 'Mã đơn hàng', value: qrData.orderRef },
-                { label: 'Số tiền',     value: fmt(totalPrice), highlight: true },
-                { label: 'Cổng thanh toán', value: 'VNPay QR' },
-              ].map((row) => (
+                { label: 'Ngân hàng',     value: qrData.bankInfo?.bankCode },
+                { label: 'Số tài khoản',  value: qrData.bankInfo?.accountNo },
+                { label: 'Chủ tài khoản', value: qrData.bankInfo?.accountName },
+                { label: 'Số tiền',       value: fmt(totalPrice), highlight: true },
+                { label: 'Nội dung CK',   value: qrData.bankInfo?.content, important: true },
+              ].filter((r) => r.value).map((row) => (
                 <div key={row.label} className="qr-bank-row">
                   <span className="qr-bank-row__label">{row.label}</span>
-                  <span className={`qr-bank-row__value${row.highlight ? ' qr-bank-row__value--hl' : ''}`}>
+                  <span className={`qr-bank-row__value${row.highlight ? ' qr-bank-row__value--hl' : ''}${row.important ? ' qr-bank-row__value--important' : ''}`}>
                     {row.value}
                   </span>
                 </div>
@@ -259,10 +261,10 @@ function StepPayment({ customerInfo, onBack }) {
             {/* Hướng dẫn */}
             <div className="qr-steps">
               {[
-                'Mở app ngân hàng hoặc ví VNPay',
-                'Chọn "Quét mã QR"',
-                'Quét mã QR trên màn hình',
-                'Kiểm tra số tiền và xác nhận thanh toán',
+                'Mở app ngân hàng bất kỳ (MB, Vietcombank, BIDV, v.v...)',
+                'Chọn "Quét mã QR" hoặc "Chuyển khoản"',
+                'Quét QR — số tiền và nội dung tự điền sẵn',
+                'Kiểm tra thông tin và xác nhận',
                 'Nhấn "Tôi đã thanh toán" bên dưới',
               ].map((s, i) => (
                 <div key={i} className="qr-step">
@@ -301,7 +303,7 @@ function StepPayment({ customerInfo, onBack }) {
         </div>
 
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.85rem', color: '#15803d' }}>
-          Sau khi VNPay xác nhận, hệ thống tự động gửi thông báo đến email <strong>{customerInfo.email}</strong>
+          Sau khi chuyển khoản thành công, hệ thống tự động xác nhận và gửi thông báo đến email <strong>{customerInfo.email}</strong>
         </div>
 
         <button

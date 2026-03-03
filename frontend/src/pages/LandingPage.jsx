@@ -22,7 +22,6 @@ function WhyUsSection() {
     { icon:'⚡', color:'indigo', title:'Nhận hàng tức thì',       desc:'Ngay sau khi thanh toán thành công, link tải xuất hiện. Không cần chờ ship, không cần liên hệ người bán.' },
     { icon:'🔒', color:'purple', title:'Thanh toán an toàn',       desc:'Hỗ trợ MoMo, VNPay, chuyển khoản ngân hàng. Mã hóa SSL 256-bit bảo vệ mọi giao dịch của bạn.' },
     { icon:'♾️', color:'cyan',   title:'Dùng mãi mãi',             desc:'Mua một lần, tải về không giới hạn. Cập nhật phiên bản mới miễn phí cho sản phẩm được bảo hành.' },
-    { icon:'🛡️', color:'green',  title:'Hoàn tiền 7 ngày',         desc:'Không hài lòng? Liên hệ trong vòng 7 ngày để được hoàn tiền 100%, không hỏi lý do.' },
     { icon:'💬', color:'orange', title:'Hỗ trợ tiếng Việt',        desc:'Đội ngũ hỗ trợ nhiệt tình, phản hồi trong 24 giờ qua Zalo, Facebook và email.' },
     { icon:'⭐', color:'rose',   title:'Chất lượng kiểm duyệt',    desc:'Mọi sản phẩm được đội ngũ kiểm duyệt kỹ trước khi đăng bán. Cam kết đúng mô tả 100%.' },
   ];
@@ -107,9 +106,8 @@ function StatsSection() {
 /* ── Testimonials ─────────────────────────────────────────────── */
 function TestimonialsSection() {
   const reviews = [
-    { name:'Nguyễn Minh Tuấn',  role:'Freelance Designer',  content:'Mua bộ template PowerPoint rất xứng đáng. Chất lượng tốt, đúng mô tả, tải về tức thì. Sẽ còn quay lại mua nhiều hơn.' },
-    { name:'Trần Thị Lan Anh',  role:'Chủ tiệm online',     content:'Khóa học Facebook Ads rất thực tế, áp dụng được ngay. Sau 1 tháng học, chi phí quảng cáo giảm 40% mà doanh thu vẫn tăng.' },
-    { name:'Lê Hoàng Phúc',     role:'Sinh viên Kinh tế',   content:'File Excel quản lý kho hàng cực kỳ tiện. Mình dùng cho cửa hàng tạp hóa của gia đình, tiết kiệm rất nhiều thời gian.' },
+    { name:'Nguyễn Văn Hoàng',  role:'Kinh doanh Shopee',  content:'Sử dụng app quản lý bán hàng giúp tôi quản lý được khách hàng, đơn hàng và tồn kho. Thay vì ghi chép sổ sách như trước đây.' },
+    { name:'Lê Thị Mỹ Duyên',   role:'Công ty Marketing',  content:'Sử dụng app quản lý dự án rất thuận tiện, tôi quản lý thời gian và công việc tốt hơn.' },
   ];
   return (
     <section className="section section--light">
@@ -155,7 +153,7 @@ function CtaSection() {
           <Link to="/lien-he"    className="btn btn--outline btn--lg">Liên hệ tư vấn</Link>
           <Link to="/gioi-thieu" className="btn btn--outline-white btn--lg">Tìm hiểu thêm</Link>
         </div>
-        <p className="cta-note">Hoàn tiền 100% trong 7 ngày · Hỗ trợ tiếng Việt · Thanh toán an toàn</p>
+        <p className="cta-note">Hỗ trợ tiếng Việt · Thanh toán an toàn</p>
       </div>
     </section>
   );

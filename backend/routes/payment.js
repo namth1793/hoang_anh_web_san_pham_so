@@ -1,17 +1,16 @@
 /**
  * routes/payment.js
  *
- * Luồng VNPay QR:
- *  1. POST /api/payment/create  → tạo đơn hàng + sinh URL thanh toán VNPay → trả về qrUrl
- *  2. GET  /api/payment/webhook → VNPay IPN gọi sau khi thanh toán → verify chữ ký → gửi email admin
+ * Luồng SePay (chuyển khoản ngân hàng tự động):
+ *  1. POST /api/payment/create  → tạo đơn hàng + sinh VietQR URL → trả về qrUrl + bankInfo
+ *  2. POST /api/payment/webhook → SePay IPN gọi khi nhận tiền → verify → gửi email admin
  *
  * Cấu hình yêu cầu trong .env:
- *   VNP_TMN_CODE, VNP_HASH_SECRET, VNP_URL, VNP_RETURN_URL,
- *   ADMIN_EMAIL, MAIL_USER, MAIL_PASS
+ *   BANK_CODE, BANK_ACCOUNT_NO, BANK_ACCOUNT_NAME,
+ *   SEPAY_API_TOKEN, ADMIN_EMAIL, MAIL_USER, MAIL_PASS
  */
 
 const express    = require('express');
-const crypto     = require('crypto');
 const nodemailer = require('nodemailer');
 const { getDB }  = require('../db/database');
 
@@ -22,37 +21,6 @@ const router = express.Router();
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Format ngày giờ theo chuẩn VNPay: yyyyMMddHHmmss (múi giờ GMT+7)
- */
-function formatVNPayDate(date = new Date()) {
-  // Dịch sang GMT+7 rồi lấy chuỗi ISO (phần giờ sẽ là giờ VN)
-  const gmt7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
-  return gmt7.toISOString().replace(/[^0-9]/g, '').slice(0, 14);
-}
-
-/**
- * Xây chuỗi ký tên: sắp xếp key A→Z, ghép key=value, KHÔNG URL-encode
- * (đúng theo tài liệu VNPay)
- */
-function buildSignData(params) {
-  return Object.keys(params)
-    .sort()
-    .filter((k) => params[k] !== '' && params[k] != null)
-    .map((k) => `${k}=${params[k]}`)
-    .join('&');
-}
-
-/**
- * Tạo chữ ký HMAC-SHA512
- */
-function createSignature(data, secretKey) {
-  return crypto
-    .createHmac('sha512', secretKey)
-    .update(Buffer.from(data, 'utf-8'))
-    .digest('hex');
-}
-
-/**
  * Sinh mã đơn hàng duy nhất: DH + 8 chữ số cuối timestamp + 4 ký tự random
  */
 function generateOrderRef() {
@@ -61,20 +29,10 @@ function generateOrderRef() {
   return `DH${ts}${rand}`;
 }
 
-/**
- * Lấy IP thật của client (hỗ trợ proxy / nginx)
- */
-function getClientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  let ip = (forwarded ? forwarded.split(',')[0] : req.socket?.remoteAddress) || '127.0.0.1';
-  if (ip === '::1') ip = '127.0.0.1';
-  return ip.trim();
-}
-
 /* ═══════════════════════════════════════════════════════════════
    POST /api/payment/create
    Body: { amount, customerName, customerEmail, customerPhone, note, items[] }
-   Response: { qrUrl, orderRef }
+   Response: { orderRef, qrUrl, bankInfo }
    ═══════════════════════════════════════════════════════════════ */
 router.post('/create', (req, res) => {
   const { amount, customerName, customerEmail, customerPhone, note, items } = req.body;
@@ -84,23 +42,25 @@ router.post('/create', (req, res) => {
     return res.status(400).json({ message: 'Thiếu thông tin bắt buộc: amount, customerName, customerEmail' });
   }
 
-  const vnpUrl    = process.env.VNP_URL        || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  const tmnCode   = process.env.VNP_TMN_CODE;
-  const secretKey = process.env.VNP_HASH_SECRET;
-  const returnUrl = process.env.VNP_RETURN_URL  || 'http://localhost:3000/checkout';
+  const bankCode    = (process.env.BANK_CODE         || '').trim();
+  const accountNo   = (process.env.BANK_ACCOUNT_NO   || '').trim();
+  const accountName = (process.env.BANK_ACCOUNT_NAME || '').trim();
 
-  if (!tmnCode || !secretKey) {
-    return res.status(500).json({ message: 'Server chưa cấu hình VNPay (VNP_TMN_CODE, VNP_HASH_SECRET)' });
+  if (!bankCode || !accountNo) {
+    return res.status(500).json({ message: 'Server chưa cấu hình thông tin ngân hàng (BANK_CODE, BANK_ACCOUNT_NO)' });
   }
 
-  // ── Tạo mã đơn hàng & lưu DB ─────────────────────────────────
-  const orderRef = generateOrderRef();
+  // ── Tạo mã đơn hàng & nội dung chuyển khoản ─────────────────
+  const orderRef        = generateOrderRef();
+  const transferContent = `MW ${orderRef}`;   // Nội dung CK khách phải nhập
+
+  // ── Lưu đơn hàng vào DB ──────────────────────────────────────
   try {
     const db = getDB();
     db.prepare(`
       INSERT INTO orders
         (order_ref, customer_name, customer_email, customer_phone, note, items, amount, payment_method, payment_status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'vnpay_qr', 'pending')
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'bank_transfer', 'pending')
     `).run(
       orderRef,
       customerName,
@@ -115,114 +75,98 @@ router.post('/create', (req, res) => {
     return res.status(500).json({ message: 'Lỗi hệ thống khi tạo đơn hàng' });
   }
 
-  // ── Xây tham số VNPay ─────────────────────────────────────────
-  const now = new Date();
+  // ── Sinh VietQR URL (hiển thị trực tiếp dưới dạng ảnh) ──────
+  const qrUrl =
+    `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact.png` +
+    `?amount=${Math.round(Number(amount))}` +
+    `&addInfo=${encodeURIComponent(transferContent)}` +
+    `&accountName=${encodeURIComponent(accountName)}`;
 
-  const vnpParams = {
-    vnp_Version:    '2.1.0',
-    vnp_Command:    'pay',
-    vnp_TmnCode:    tmnCode,
-    // VNPay yêu cầu số tiền * 100 (đơn vị: đồng → x100)
-    vnp_Amount:     (Math.round(Number(amount)) * 100).toString(),
-    vnp_CreateDate: formatVNPayDate(now),
-    vnp_CurrCode:   'VND',
-    vnp_IpAddr:     getClientIp(req),
-    vnp_Locale:     'vn',
-    vnp_OrderInfo:  `Thanh toan don hang ${orderRef}`,
-    vnp_OrderType:  'other',
-    vnp_ReturnUrl:  returnUrl,
-    vnp_TxnRef:     orderRef,
-    // Hết hạn sau 15 phút
-    vnp_ExpireDate: formatVNPayDate(new Date(now.getTime() + 15 * 60 * 1000)),
-    // VNPAYQR: bắt buộc để hiện QR thay vì chọn ngân hàng
-    vnp_BankCode:   'VNPAYQR',
-  };
+  console.log('[SePay] Đơn hàng tạo:', orderRef, '| Nội dung CK:', transferContent);
 
-  // ── Ký HMAC-SHA512 (không URL-encode khi ký) ─────────────────
-  const signData   = buildSignData(vnpParams);
-  const secureHash = createSignature(signData, secretKey);
-
-  // ── Xây URL thanh toán (URL-encode khi đưa lên URL) ──────────
-  const urlParams = new URLSearchParams({ ...vnpParams, vnp_SecureHash: secureHash });
-  const paymentUrl = `${vnpUrl}?${urlParams.toString()}`;
-
-  return res.json({ qrUrl: paymentUrl, orderRef });
+  return res.json({
+    orderRef,
+    qrUrl,          // URL ảnh VietQR — dùng trực tiếp làm <img src>
+    bankInfo: {
+      bankCode,
+      accountNo,
+      accountName,
+      amount:  Math.round(Number(amount)),
+      content: transferContent,
+    },
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   GET /api/payment/webhook
-   VNPay gọi endpoint này sau khi thanh toán (IPN – Instant Payment Notification)
-   Response phải là JSON { RspCode, Message } — VNPay đọc để biết merchant đã nhận
+   POST /api/payment/webhook
+   SePay gọi endpoint này sau khi phát hiện tiền vào tài khoản
+   Header: Authorization: Apikey <SEPAY_API_TOKEN>
+   Body: { id, gateway, content, transferAmount, transferType, accountNumber, ... }
    ═══════════════════════════════════════════════════════════════ */
-router.get('/webhook', async (req, res) => {
-  const vnpParams    = { ...req.query };
-  const receivedHash = vnpParams['vnp_SecureHash'];
+router.post('/webhook', async (req, res) => {
+  // ── Xác thực API token từ SePay ──────────────────────────────
+  const authHeader = (req.headers['authorization'] || '').trim();
+  const sePayToken = (process.env.SEPAY_API_TOKEN  || '').trim();
 
-  // ── Xoá trường hash trước khi verify ─────────────────────────
-  delete vnpParams['vnp_SecureHash'];
-  delete vnpParams['vnp_SecureHashType'];
-
-  // ── Verify chữ ký ─────────────────────────────────────────────
-  const secretKey    = process.env.VNP_HASH_SECRET;
-  const signData     = buildSignData(vnpParams);
-  const expectedHash = createSignature(signData, secretKey);
-
-  if (receivedHash !== expectedHash) {
-    return res.json({ RspCode: '97', Message: 'Invalid Signature' });
+  if (sePayToken && authHeader !== `Apikey ${sePayToken}`) {
+    console.warn('[SePay] Webhook: unauthorized, header =', authHeader);
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const orderRef = vnpParams['vnp_TxnRef'];
-  const rspCode  = vnpParams['vnp_ResponseCode'];
-  // VNPay gửi số tiền x100, chia lại để lưu thực tế
-  const amount   = parseInt(vnpParams['vnp_Amount'], 10) / 100;
+  const { content, transferAmount, transferType } = req.body;
+  console.log('[SePay] Webhook nhận:', { content, transferAmount, transferType });
 
-  // ── Tìm đơn hàng trong DB ─────────────────────────────────────
-  const db    = getDB();
-  const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
+  // ── Chỉ xử lý giao dịch tiền vào ────────────────────────────
+  if (transferType !== 'in') {
+    return res.json({ success: true, message: 'Ignored: not incoming transfer' });
+  }
+
+  // ── Tìm mã đơn hàng trong nội dung chuyển khoản ─────────────
+  // Định dạng: DH + 8 chữ số + 4 ký tự (ví dụ: DH99371942Z6EL)
+  const match = (content || '').match(/DH[A-Z0-9]{12}/i);
+  if (!match) {
+    console.log('[SePay] Không tìm thấy mã đơn hàng trong nội dung:', content);
+    return res.json({ success: false, message: 'Order ref not found in content' });
+  }
+
+  const orderRef = match[0].toUpperCase();
+  const db       = getDB();
+  const order    = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
 
   if (!order) {
-    return res.json({ RspCode: '01', Message: 'Order not found' });
+    return res.json({ success: false, message: 'Order not found' });
   }
   if (order.payment_status === 'paid') {
-    // Đã xử lý rồi → báo VNPay biết (tránh VNPay gọi lại)
-    return res.json({ RspCode: '02', Message: 'Order already confirmed' });
+    return res.json({ success: true, message: 'Already confirmed' });
+  }
+  if (Number(transferAmount) < Number(order.amount)) {
+    console.warn(`[SePay] Số tiền không khớp: nhận ${transferAmount}đ, cần ${order.amount}đ`);
+    return res.json({ success: false, message: 'Amount mismatch' });
   }
 
-  // ── Xử lý kết quả thanh toán ─────────────────────────────────
-  if (rspCode === '00') {
-    // ✅ Thanh toán thành công
-    const paidAt = new Date().toISOString();
+  // ── Cập nhật trạng thái đơn hàng ─────────────────────────────
+  const paidAt = new Date().toISOString();
+  db.prepare(`
+    UPDATE orders SET payment_status = 'paid', paid_at = ?
+    WHERE order_ref = ?
+  `).run(paidAt, orderRef);
 
-    db.prepare(`
-      UPDATE orders
-      SET payment_status = 'paid',
-          vnp_transaction_no = ?,
-          paid_at = ?
-      WHERE order_ref = ?
-    `).run(vnpParams['vnp_TransactionNo'] || '', paidAt, orderRef);
+  console.log(`[SePay] Đơn hàng ${orderRef} thanh toán thành công: ${transferAmount}đ`);
 
-    // Gửi email thông báo admin — bất đồng bộ, KHÔNG block response
-    sendPaymentEmail({
-      orderRef,
-      amount,
-      customerName:  order.customer_name,
-      customerEmail: order.customer_email,
-      paidAt,
-    }).catch((err) => console.error('Lỗi gửi email thanh toán:', err.message));
+  // ── Gửi email thông báo admin ─────────────────────────────────
+  sendPaymentEmail({
+    orderRef,
+    amount:        transferAmount,
+    customerName:  order.customer_name,
+    customerEmail: order.customer_email,
+    paidAt,
+  }).catch((err) => console.error('Lỗi gửi email:', err.message));
 
-  } else {
-    // ❌ Thanh toán thất bại / bị huỷ
-    db.prepare(`UPDATE orders SET payment_status = 'failed' WHERE order_ref = ?`).run(orderRef);
-    console.log(`Đơn hàng ${orderRef} thanh toán thất bại (VNPay code: ${rspCode})`);
-  }
-
-  // VNPay yêu cầu luôn phản hồi 00 để biết merchant đã nhận IPN
-  return res.json({ RspCode: '00', Message: 'Confirm Success' });
+  return res.json({ success: true, message: 'Payment confirmed' });
 });
 
 /* ═══════════════════════════════════════════════════════════════
    GỬI EMAIL THÔNG BÁO ADMIN
-   Chỉ gọi sau khi webhook xác nhận thanh toán thành công (rspCode === "00")
    ═══════════════════════════════════════════════════════════════ */
 async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail, paidAt }) {
   const adminEmail = process.env.ADMIN_EMAIL;
@@ -254,7 +198,6 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
       <h2 style="margin:0;color:white;font-size:1.15rem">Đơn hàng đã thanh toán thành công</h2>
       <p style="margin:6px 0 0;color:#93C5FD;font-size:0.85rem">MANAGE WORK – Thông báo tự động</p>
     </div>
-
     <div style="padding:28px">
       <table style="width:100%;border-collapse:collapse;font-size:0.95rem">
         <tr style="border-bottom:1px solid #f3f4f6">
@@ -275,7 +218,7 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
         </tr>
         <tr style="border-bottom:1px solid #f3f4f6">
           <td style="padding:10px 0;color:#6b7280">Phương thức</td>
-          <td style="padding:10px 0">VNPay QR</td>
+          <td style="padding:10px 0">Chuyển khoản ngân hàng (SePay)</td>
         </tr>
         <tr>
           <td style="padding:10px 0;color:#6b7280">Thời gian TT</td>
@@ -283,7 +226,6 @@ async function sendPaymentEmail({ orderRef, amount, customerName, customerEmail,
         </tr>
       </table>
     </div>
-
     <div style="background:#f9fafb;padding:14px 28px;font-size:0.78rem;color:#9ca3af;text-align:center">
       Email tự động từ hệ thống MANAGE WORK &middot; Không trả lời email này
     </div>

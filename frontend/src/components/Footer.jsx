@@ -18,7 +18,7 @@ export default function Footer() {
           <div>
             <div className="footer__col-title">Danh mục</div>
             <ul className="footer__links">
-              {['Khóa học','Template','Ebook','Đồ họa','Biểu mẫu'].map((c) => (
+              {['Quản lý bán hàng','Quản lý dự án','Khởi nghiệp tinh gọn','Quản lý tài chính'].map((c) => (
                 <li key={c}><Link to="/san-pham">{c}</Link></li>
               ))}
             </ul>
@@ -36,9 +36,9 @@ export default function Footer() {
           <div>
             <div className="footer__col-title">Liên hệ</div>
             <ul className="footer__links">
-              <li><a href="#">📧 admin@sanphamso.vn</a></li>
-              <li><a href="#">💬 Zalo: 0909 xxx xxx</a></li>
-              <li><a href="#">Facebook Page</a></li>
+              <li><a href="tel:0878877798">📞 0878.877.798</a></li>
+              <li><a href="mailto:Smanagework@gmail.com">📧 Smanagework@gmail.com</a></li>
+              <li><a href="#">📍 Đường Quang Trung, Quận Gò Vấp, TP Hồ Chí Minh</a></li>
             </ul>
           </div>
         </div>

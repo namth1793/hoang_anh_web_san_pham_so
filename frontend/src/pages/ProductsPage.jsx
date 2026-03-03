@@ -6,26 +6,23 @@ import api from '../utils/api';
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 
 const CATEGORY_META = {
-  'Khoa hoc':  { emoji: '🎓', label: 'Khóa học' },
-  'Khóa học':  { emoji: '🎓', label: 'Khóa học' },
-  Template:    { emoji: '🎨', label: 'Template' },
-  Ebook:       { emoji: '📚', label: 'Ebook' },
-  'Do hoa':    { emoji: '🖼️', label: 'Đồ họa' },
-  'Đồ họa':   { emoji: '🖼️', label: 'Đồ họa' },
-  'Bieu mau':  { emoji: '📊', label: 'Biểu mẫu' },
-  'Biểu mẫu': { emoji: '📊', label: 'Biểu mẫu' },
-  'Phan mem':  { emoji: '💻', label: 'Phần mềm' },
-  'Phần mềm': { emoji: '💻', label: 'Phần mềm' },
+  'Quan ly ban hang':    { emoji: '🛒', label: 'Quản lý bán hàng' },
+  'Quản lý bán hàng':   { emoji: '🛒', label: 'Quản lý bán hàng' },
+  'Quan ly du an':       { emoji: '📋', label: 'Quản lý dự án' },
+  'Quản lý dự án':      { emoji: '📋', label: 'Quản lý dự án' },
+  'Khoi nghiep tinh gon':   { emoji: '🚀', label: 'Khởi nghiệp tinh gọn' },
+  'Khởi nghiệp tinh gọn':  { emoji: '🚀', label: 'Khởi nghiệp tinh gọn' },
+  'Quan ly tai chinh':   { emoji: '💰', label: 'Quản lý tài chính' },
+  'Quản lý tài chính':  { emoji: '💰', label: 'Quản lý tài chính' },
 };
 const getCatMeta = (cat) => CATEGORY_META[cat] || { emoji: '📦', label: cat || 'Khác' };
 // getCatMeta used in filter categories below
 const CATEGORIES = [
-  { key: null,        emoji: '🛍',  label: 'Tất cả' },
-  { key: 'Khóa học', emoji: '🎓',  label: 'Khóa học' },
-  { key: 'Template',  emoji: '🎨',  label: 'Template' },
-  { key: 'Ebook',     emoji: '📚',  label: 'Ebook' },
-  { key: 'Đồ họa',  emoji: '🖼️', label: 'Đồ họa' },
-  { key: 'Biểu mẫu', emoji: '📊',  label: 'Biểu mẫu' },
+  { key: null,                    emoji: '🛍',  label: 'Tất cả' },
+  { key: 'Quản lý bán hàng',    emoji: '🛒',  label: 'Quản lý bán hàng' },
+  { key: 'Quản lý dự án',       emoji: '📋',  label: 'Quản lý dự án' },
+  { key: 'Khởi nghiệp tinh gọn', emoji: '🚀', label: 'Khởi nghiệp tinh gọn' },
+  { key: 'Quản lý tài chính',   emoji: '💰',  label: 'Quản lý tài chính' },
 ];
 
 function ProductCard({ product }) {

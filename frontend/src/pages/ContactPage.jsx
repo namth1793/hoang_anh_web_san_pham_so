@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 
-const SERVICES = ['Khóa học', 'Template', 'Ebook', 'Đồ họa', 'Biểu mẫu', 'Khác'];
+const SERVICES = ['Quản lý bán hàng', 'Quản lý dự án', 'Khởi nghiệp tinh gọn', 'Quản lý tài chính', 'Khác'];
 
 export default function ContactPage() {
   const [form, setForm]       = useState({ name: '', phone: '', email: '', service: '', message: '' });
@@ -58,8 +58,9 @@ export default function ContactPage() {
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--dark-2)', marginBottom: 24 }}>Thông tin liên hệ</h2>
 
             {[
-              { icon: '📧', label: 'Email', value: 'admin@sanphamso.vn' },
-              { icon: '💬', label: 'Zalo', value: '0909 xxx xxx' },
+              { icon: '📞', label: 'Điện thoại', value: '0878.877.798' },
+              { icon: '📧', label: 'Email', value: 'Smanagework@gmail.com' },
+              { icon: '📍', label: 'Địa chỉ', value: 'Đường Quang Trung, Quận Gò Vấp, TP Hồ Chí Minh' },
               { icon: '⏰', label: 'Giờ hỗ trợ', value: '8:00 – 22:00 (T2–CN)' },
             ].map((c) => (
               <div key={c.label} className="contact-info-item">
@@ -71,11 +72,6 @@ export default function ContactPage() {
               </div>
             ))}
 
-            <div style={{ marginTop: 32, padding: '20px', background: '#eef2ff', borderRadius: 'var(--radius)', borderLeft: '4px solid var(--primary)' }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--dark-2)', lineHeight: 1.6 }}>
-                🎁 <strong>Cam kết của chúng tôi:</strong> Hoàn tiền 100% trong 7 ngày nếu bạn không hài lòng với sản phẩm đã mua.
-              </p>
-            </div>
           </div>
 
           {/* Right: form */}
