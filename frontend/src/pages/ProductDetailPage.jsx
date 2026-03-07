@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { marked } from 'marked';
 import api from '../utils/api';
 import { useCart } from '../context/CartContext';
+
+// Cấu hình marked: không thêm wrapper <p> với br thừa
+marked.setOptions({ breaks: true, gfm: true });
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 
@@ -25,6 +29,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [added, setAdded] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -53,6 +58,17 @@ export default function ProductDetailPage() {
     : null;
   const catMeta = getCatMeta(product.category);
 
+  // Danh sách ảnh: ưu tiên mảng images, fallback về image_url
+  const imageList = (Array.isArray(product.images) && product.images.length > 0)
+    ? product.images
+    : (product.image_url ? [product.image_url] : []);
+
+  // Parse markdown description
+  const descHtml = useMemo(() => {
+    if (!product.description) return '';
+    return marked.parse(product.description);
+  }, [product.description]);
+
   const handleAddToCart = () => {
     addItem(product);
     setAdded(true);
@@ -78,17 +94,71 @@ export default function ProductDetailPage() {
 
       <div className="container" style={{ padding: '40px 24px' }}>
         <div className="product-detail-grid">
-          {/* Left: Image */}
+          {/* Left: Image Gallery */}
           <div className="product-detail__img-col">
-            <div className="product-detail__img-wrap">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.name} className="product-detail__img"
-                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            {/* Main image */}
+            <div style={{ position: 'relative', background: '#f1f5f9', borderRadius: 12, overflow: 'hidden', aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {imageList.length > 0 ? (
+                <img
+                  key={activeIdx}
+                  src={imageList[activeIdx]}
+                  alt={`${product.name} - ảnh ${activeIdx + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
-              ) : null}
-              <div className="product-detail__img-ph" style={{ display: product.image_url ? 'none' : 'flex' }}>📦</div>
-              {discount && <span className="prod-card__badge-sale" style={{ fontSize: '1rem', padding: '6px 14px' }}>-{discount}%</span>}
+              ) : (
+                <div style={{ fontSize: '4rem', color: '#cbd5e1' }}>📦</div>
+              )}
+
+              {/* Discount badge */}
+              {discount && (
+                <span className="prod-card__badge-sale" style={{ fontSize: '1rem', padding: '6px 14px' }}>
+                  -{discount}%
+                </span>
+              )}
+
+              {/* Prev / Next arrows */}
+              {imageList.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setActiveIdx((i) => (i - 1 + imageList.length) % imageList.length)}
+                    style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', boxShadow: '0 1px 4px rgba(0,0,0,.15)', color: '#374151' }}
+                    aria-label="Ảnh trước"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setActiveIdx((i) => (i + 1) % imageList.length)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', boxShadow: '0 1px 4px rgba(0,0,0,.15)', color: '#374151' }}
+                    aria-label="Ảnh sau"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* Thumbnails */}
+            {imageList.length > 1 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8, marginTop: 10 }}>
+                {imageList.map((url, idx) => (
+                  <div
+                    key={url + idx}
+                    onClick={() => setActiveIdx(idx)}
+                    style={{ aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: idx === activeIdx ? '2px solid var(--primary)' : '2px solid #e2e8f0', opacity: idx === activeIdx ? 1 : 0.7, transition: 'all .15s' }}
+                  >
+                    <img src={url} alt={`thumb ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Image counter */}
+            {imageList.length > 1 && (
+              <div style={{ textAlign: 'center', marginTop: 6, fontSize: '0.78rem', color: '#94a3b8' }}>
+                {activeIdx + 1} / {imageList.length}
+              </div>
+            )}
           </div>
 
           {/* Right: Info */}
@@ -123,12 +193,6 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Description */}
-            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px 24px', marginBottom: 28 }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '1rem', color: 'var(--dark-2)', fontWeight: 700 }}>Mô tả sản phẩm</h3>
-              <p style={{ margin: 0, color: 'var(--text)', lineHeight: 1.8 }}>{product.description || 'Chưa có mô tả chi tiết.'}</p>
-            </div>
-
             {/* Highlights */}
             <div className="product-highlights-grid">
               {[
@@ -160,6 +224,22 @@ export default function ProductDetailPage() {
               🔒 Thanh toán bảo mật · Hoàn tiền nếu không hài lòng
             </p>
           </div>
+        </div>
+
+        {/* Mô tả full-width */}
+        <div style={{ marginTop: 48, background: 'white', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 28px', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', textTransform: 'uppercase' }}>Mô tả</span>
+          </div>
+          {descHtml ? (
+            <div
+              className="product-description-md"
+              dangerouslySetInnerHTML={{ __html: descHtml }}
+              style={{ padding: '28px 32px' }}
+            />
+          ) : (
+            <p style={{ padding: '28px 32px', margin: 0, color: 'var(--text-muted)' }}>Chưa có mô tả chi tiết.</p>
+          )}
         </div>
 
         {/* Back link */}

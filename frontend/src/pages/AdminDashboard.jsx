@@ -504,10 +504,21 @@ function ProductForm({ editProduct, onDone, onCancel }) {
 
             {/* Description */}
             <div className="form-group">
-              <label className="form-label" htmlFor="description">Mô tả sản phẩm</label>
+              <label className="form-label" htmlFor="description">
+                Mô tả sản phẩm
+                <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+                  Hỗ trợ Markdown (## Tiêu đề, **in đậm**, - danh sách...)
+                </span>
+              </label>
               <textarea id="description" name="description" className="form-textarea"
-                placeholder="Mô tả ngắn gọn về sản phẩm..." value={form.description}
-                onChange={handleChange} rows={3} />
+                placeholder={'## Tính năng nổi bật\n\n- Tính năng 1\n- Tính năng 2\n\n## Nội dung bao gồm\n\nMô tả chi tiết sản phẩm...'}
+                value={form.description}
+                onChange={handleChange} rows={10}
+                style={{ fontFamily: 'monospace', fontSize: '0.88rem' }} />
+              <span className="form-hint">
+                Markdown được render đầy đủ trên trang sản phẩm.{' '}
+                <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>Xem cú pháp →</a>
+              </span>
             </div>
 
             {/* Price & Original Price */}
