@@ -72,13 +72,18 @@ function initDB() {
   if (!cols.includes('images'))
     database.exec("ALTER TABLE products ADD COLUMN images TEXT DEFAULT '[]'");
 
+  const ADMIN_PASSWORD = 'admin12345@';
   const adminExists = database.prepare('SELECT id FROM users WHERE username = ?').get('admin');
   if (!adminExists) {
-    const hash = bcrypt.hashSync('admin123', 10);
+    const hash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
     database.prepare(
       'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)'
     ).run('admin', 'admin@sanphamso.vn', hash, 'admin');
-    console.log('Admin mac dinh da duoc tao (username: admin | password: admin123)');
+    console.log(`Admin mac dinh da duoc tao (username: admin | password: ${ADMIN_PASSWORD})`);
+  } else {
+    // Cập nhật mật khẩu admin nếu DB đã tồn tại
+    const newHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+    database.prepare('UPDATE users SET password = ? WHERE username = ?').run(newHash, 'admin');
   }
 
   const count = database.prepare('SELECT COUNT(*) as c FROM products').get();
