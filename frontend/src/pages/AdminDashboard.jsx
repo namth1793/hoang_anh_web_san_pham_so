@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -372,10 +372,15 @@ function ProductList({ onEdit, onAddNew, refresh }) {
 /* ── Product Form ────────────────────────────────────────────── */
 function ProductForm({ editProduct, onDone, onCancel }) {
   const isEdit = !!editProduct;
+
+  // Khởi tạo mảng ảnh từ sản phẩm đang sửa
+  const initialImages = editProduct?.images
+    ? (Array.isArray(editProduct.images) ? editProduct.images : (() => { try { return JSON.parse(editProduct.images); } catch { return []; } })())
+    : (editProduct?.image_url ? [editProduct.image_url] : []);
+
   const [form, setForm] = useState({
     name:           editProduct?.name           || '',
     description:    editProduct?.description    || '',
-    image_url:      editProduct?.image_url      || '',
     price:          editProduct?.price          ?? '',
     original_price: editProduct?.original_price ?? '',
     category:       editProduct?.category       || '',
@@ -383,9 +388,12 @@ function ProductForm({ editProduct, onDone, onCancel }) {
     download_url:   editProduct?.download_url   || '',
     is_featured:    editProduct?.is_featured    === 1,
   });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [imgError, setImgError] = useState(false);
+  const [images, setImages]       = useState(initialImages);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState('');
+  const [loading, setLoading]     = useState(false);
+  const [errors, setErrors]       = useState({});
+  const fileInputRef              = useRef(null);
 
   const validate = () => {
     const errs = {};
@@ -399,7 +407,42 @@ function ProductForm({ editProduct, onDone, onCancel }) {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
-    if (name === 'image_url') setImgError(false);
+  };
+
+  // Upload files lên Cloudinary qua backend
+  const handleFilesSelect = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    // Reset input để có thể chọn lại cùng file
+    e.target.value = '';
+
+    setUploadErr('');
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((f) => formData.append('images', f));
+      const res = await api.post('/upload/images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImages((prev) => [...prev, ...res.data.urls]);
+    } catch (err) {
+      setUploadErr(err.response?.data?.message || 'Upload ảnh thất bại. Vui lòng thử lại.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (idx) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const moveFirst = (idx) => {
+    setImages((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(idx, 1);
+      next.unshift(item);
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -409,10 +452,11 @@ function ProductForm({ editProduct, onDone, onCancel }) {
 
     setLoading(true);
     try {
+      const payload = { ...form, images };
       if (isEdit) {
-        await api.put(`/products/${editProduct.id}`, form);
+        await api.put(`/products/${editProduct.id}`, payload);
       } else {
-        await api.post('/products', form);
+        await api.post('/products', payload);
       }
       onDone(isEdit ? 'Cập nhật sản phẩm thành công.' : 'Thêm sản phẩm thành công.');
     } catch (err) {
@@ -445,85 +489,43 @@ function ProductForm({ editProduct, onDone, onCancel }) {
         <form onSubmit={handleSubmit}>
           <div className="form-card__body">
             {errors.general && (
-              <div
-                style={{
-                  background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c',
-                  padding: '12px 14px', borderRadius: 8, fontSize: '0.88rem',
-                  display: 'flex', gap: 8, alignItems: 'center',
-                }}
-              >
+              <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#b91c1c', padding:'12px 14px', borderRadius:8, fontSize:'0.88rem', display:'flex', gap:8, alignItems:'center' }}>
                 ⚠️ {errors.general}
               </div>
             )}
 
             {/* Name */}
             <div className="form-group">
-              <label className="form-label" htmlFor="name">
-                Tên sản phẩm <span>*</span>
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                className="form-input"
-                placeholder="Nhập tên sản phẩm..."
-                value={form.name}
-                onChange={handleChange}
-              />
-              {errors.name && <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>{errors.name}</span>}
+              <label className="form-label" htmlFor="name">Tên sản phẩm <span>*</span></label>
+              <input id="name" name="name" type="text" className="form-input"
+                placeholder="Nhập tên sản phẩm..." value={form.name} onChange={handleChange} />
+              {errors.name && <span style={{ fontSize:'0.8rem', color:'#ef4444' }}>{errors.name}</span>}
             </div>
 
             {/* Description */}
             <div className="form-group">
               <label className="form-label" htmlFor="description">Mô tả sản phẩm</label>
-              <textarea
-                id="description"
-                name="description"
-                className="form-textarea"
-                placeholder="Mô tả ngắn gọn về sản phẩm..."
-                value={form.description}
-                onChange={handleChange}
-                rows={3}
-              />
+              <textarea id="description" name="description" className="form-textarea"
+                placeholder="Mô tả ngắn gọn về sản phẩm..." value={form.description}
+                onChange={handleChange} rows={3} />
             </div>
 
-            {/* Price & Category */}
             {/* Price & Original Price */}
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="price">
-                  Giá bán (VNĐ) <span>*</span>
-                </label>
-                <input
-                  id="price"
-                  name="price"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  className="form-input"
-                  placeholder="299000"
-                  value={form.price}
-                  onChange={handleChange}
-                />
-                {errors.price && <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>{errors.price}</span>}
+                <label className="form-label" htmlFor="price">Giá bán (VNĐ) <span>*</span></label>
+                <input id="price" name="price" type="number" min="0" step="1000"
+                  className="form-input" placeholder="299000" value={form.price} onChange={handleChange} />
+                {errors.price && <span style={{ fontSize:'0.8rem', color:'#ef4444' }}>{errors.price}</span>}
                 {form.price !== '' && !errors.price && (
                   <span className="form-hint">Hiển thị: {formatPrice(Number(form.price) || 0)}</span>
                 )}
               </div>
-
               <div className="form-group">
                 <label className="form-label" htmlFor="original_price">Giá gốc (để hiện giảm giá)</label>
-                <input
-                  id="original_price"
-                  name="original_price"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  className="form-input"
-                  placeholder="Để trống nếu không giảm giá"
-                  value={form.original_price}
-                  onChange={handleChange}
-                />
+                <input id="original_price" name="original_price" type="number" min="0" step="1000"
+                  className="form-input" placeholder="Để trống nếu không giảm giá"
+                  value={form.original_price} onChange={handleChange} />
                 <span className="form-hint">Điền cao hơn giá bán để hiện badge giảm giá</span>
               </div>
             </div>
@@ -532,13 +534,8 @@ function ProductForm({ editProduct, onDone, onCancel }) {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="category">Danh mục</label>
-                <select
-                  id="category"
-                  name="category"
-                  className="form-select"
-                  value={form.category}
-                  onChange={handleChange}
-                >
+                <select id="category" name="category" className="form-select"
+                  value={form.category} onChange={handleChange}>
                   <option value="">-- Chọn danh mục --</option>
                   <option value="Khóa học">🎓 Khóa học</option>
                   <option value="Template">🎨 Template</option>
@@ -549,68 +546,115 @@ function ProductForm({ editProduct, onDone, onCancel }) {
                   <option value="Khác">📦 Khác</option>
                 </select>
               </div>
-
               <div className="form-group">
                 <label className="form-label" htmlFor="file_type">Loại file</label>
-                <input
-                  id="file_type"
-                  name="file_type"
-                  type="text"
-                  className="form-input"
-                  placeholder="PDF, PPTX, Video MP4, ZIP..."
-                  value={form.file_type}
-                  onChange={handleChange}
-                />
+                <input id="file_type" name="file_type" type="text" className="form-input"
+                  placeholder="PDF, PPTX, Video MP4, ZIP..." value={form.file_type} onChange={handleChange} />
                 <span className="form-hint">Định dạng file khách hàng sẽ nhận được</span>
               </div>
             </div>
 
-            {/* Image URL */}
+            {/* ── IMAGE UPLOAD ─────────────────────────────────── */}
             <div className="form-group">
-              <label className="form-label" htmlFor="image_url">URL hình ảnh</label>
+              <label className="form-label">Hình ảnh sản phẩm</label>
+
+              {/* Vùng kéo thả / chọn file */}
+              <div
+                style={{
+                  border: '2px dashed #cbd5e1', borderRadius: 10, padding: '20px 16px',
+                  textAlign: 'center', cursor: 'pointer', background: '#f8fafc',
+                  transition: 'border-color .2s',
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const dt = e.dataTransfer;
+                  if (dt.files.length) handleFilesSelect({ target: { files: dt.files, value: '' } });
+                }}
+              >
+                {uploading ? (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, color:'#64748b' }}>
+                    <span className="spinner" style={{ width:18, height:18, borderWidth:2 }} />
+                    Đang upload lên Cloudinary...
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize:'2rem', marginBottom:6 }}>🖼️</div>
+                    <div style={{ fontWeight:600, color:'#374151', fontSize:'0.9rem' }}>
+                      Kéo thả ảnh vào đây hoặc <span style={{ color:'var(--primary)', textDecoration:'underline' }}>chọn file</span>
+                    </div>
+                    <div style={{ fontSize:'0.78rem', color:'#94a3b8', marginTop:4 }}>
+                      JPG, PNG, WEBP, GIF · Tối đa 5MB/ảnh · Không giới hạn số lượng
+                    </div>
+                  </>
+                )}
+              </div>
+
               <input
-                id="image_url"
-                name="image_url"
-                type="url"
-                className="form-input"
-                placeholder="https://example.com/image.jpg"
-                value={form.image_url}
-                onChange={handleChange}
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                style={{ display:'none' }}
+                onChange={handleFilesSelect}
               />
-              <span className="form-hint">Nhập đường dẫn hình ảnh trực tiếp (jpg, png, webp...)</span>
-              {form.image_url && !imgError && (
-                <img src={form.image_url} alt="Preview" className="img-preview" onError={() => setImgError(true)} />
+
+              {uploadErr && (
+                <span style={{ fontSize:'0.8rem', color:'#ef4444' }}>⚠️ {uploadErr}</span>
               )}
-              {imgError && (
-                <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>⚠️ Không thể tải hình ảnh từ URL này.</span>
+
+              {/* Grid preview ảnh */}
+              {images.length > 0 && (
+                <div style={{ marginTop:12 }}>
+                  <div style={{ fontSize:'0.8rem', color:'#64748b', marginBottom:8 }}>
+                    {images.length} ảnh · Ảnh đầu tiên là ảnh bìa · Click ảnh để đặt làm bìa
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))', gap:8 }}>
+                    {images.map((url, idx) => (
+                      <div key={url + idx} style={{ position:'relative', borderRadius:8, overflow:'hidden', border: idx === 0 ? '2px solid var(--primary)' : '2px solid #e2e8f0', aspectRatio:'1' }}>
+                        <img
+                          src={url}
+                          alt={`Ảnh ${idx + 1}`}
+                          style={{ width:'100%', height:'100%', objectFit:'cover', cursor:'pointer' }}
+                          onClick={() => moveFirst(idx)}
+                        />
+                        {idx === 0 && (
+                          <div style={{ position:'absolute', top:4, left:4, background:'var(--primary)', color:'white', fontSize:'0.65rem', fontWeight:700, padding:'2px 6px', borderRadius:4 }}>
+                            BÌA
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          style={{ position:'absolute', top:4, right:4, width:22, height:22, borderRadius:'50%', background:'rgba(0,0,0,0.55)', color:'white', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.75rem', fontWeight:700 }}
+                          title="Xóa ảnh"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
+            {/* ── END IMAGE UPLOAD ─────────────────────────────── */}
 
             {/* Download URL */}
             <div className="form-group">
               <label className="form-label" htmlFor="download_url">Link tải file (Download URL)</label>
-              <input
-                id="download_url"
-                name="download_url"
-                type="url"
-                className="form-input"
+              <input id="download_url" name="download_url" type="url" className="form-input"
                 placeholder="https://drive.google.com/... hoặc link tải trực tiếp"
-                value={form.download_url}
-                onChange={handleChange}
-              />
+                value={form.download_url} onChange={handleChange} />
               <span className="form-hint">Link khách hàng nhận được sau khi mua (Google Drive, Dropbox, v.v.)</span>
             </div>
 
             {/* Is Featured */}
             <div className="form-group">
               <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
-                <input
-                  type="checkbox"
-                  name="is_featured"
-                  checked={form.is_featured}
+                <input type="checkbox" name="is_featured" checked={form.is_featured}
                   onChange={handleChange}
-                  style={{ width:18, height:18, accentColor:'var(--primary)', cursor:'pointer' }}
-                />
+                  style={{ width:18, height:18, accentColor:'var(--primary)', cursor:'pointer' }} />
                 <span className="form-label" style={{ margin:0 }}>
                   🔥 Đánh dấu là sản phẩm nổi bật (Hot)
                 </span>
@@ -620,13 +664,13 @@ function ProductForm({ editProduct, onDone, onCancel }) {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn--ghost" onClick={onCancel} disabled={loading}>
+            <button type="button" className="btn btn--ghost" onClick={onCancel} disabled={loading || uploading}>
               Hủy
             </button>
-            <button type="submit" className="btn btn--primary" disabled={loading}>
+            <button type="submit" className="btn btn--primary" disabled={loading || uploading}>
               {loading ? (
                 <>
-                  <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                  <span className="spinner" style={{ width:16, height:16, borderWidth:2 }} />
                   Đang lưu...
                 </>
               ) : (

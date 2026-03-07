@@ -69,6 +69,8 @@ function initDB() {
     database.exec("ALTER TABLE products ADD COLUMN download_url TEXT DEFAULT ''");
   if (!cols.includes('is_featured'))
     database.exec('ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0');
+  if (!cols.includes('images'))
+    database.exec("ALTER TABLE products ADD COLUMN images TEXT DEFAULT '[]'");
 
   const adminExists = database.prepare('SELECT id FROM users WHERE username = ?').get('admin');
   if (!adminExists) {
