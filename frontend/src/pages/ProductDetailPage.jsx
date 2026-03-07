@@ -41,6 +41,12 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // useMemo phải đứng trước mọi early return (Rules of Hooks)
+  const descHtml = useMemo(() => {
+    if (!product?.description) return '';
+    return marked.parse(product.description);
+  }, [product?.description]);
+
   if (loading) return (
     <div className="loading-fullscreen"><div className="spinner" /></div>
   );
@@ -62,12 +68,6 @@ export default function ProductDetailPage() {
   const imageList = (Array.isArray(product.images) && product.images.length > 0)
     ? product.images
     : (product.image_url ? [product.image_url] : []);
-
-  // Parse markdown description
-  const descHtml = useMemo(() => {
-    if (!product.description) return '';
-    return marked.parse(product.description);
-  }, [product.description]);
 
   const handleAddToCart = () => {
     addItem(product);
